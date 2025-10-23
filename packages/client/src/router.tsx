@@ -16,6 +16,7 @@ import DropdownTestPage from "./pages/DropdownTestPage";
 import FilesV1Page from "./pages/FilesV1Page";
 import TicketsPage from "./pages/TicketsPage";
 import TicketGroupDetailPage from "./pages/TicketGroupDetailPage";
+import TicketDetailPage from "./pages/TicketDetailPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import HelpPage from "./pages/HelpPage";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
@@ -69,6 +70,16 @@ const router = createBrowserRouter([
 			<MockAuthProvider role="owner">
 				<SSEProvider apiUrl={import.meta.env.VITE_API_URL || ''} enabled={true}>
 					<TicketsPage />
+				</SSEProvider>
+			</MockAuthProvider>
+		),
+	},
+	{
+		path: "/tickets/:groupId/:ticketId",
+		element: (
+			<MockAuthProvider role="owner">
+				<SSEProvider apiUrl={import.meta.env.VITE_API_URL || ''} enabled={true}>
+					<TicketDetailPage />
 				</SSEProvider>
 			</MockAuthProvider>
 		),

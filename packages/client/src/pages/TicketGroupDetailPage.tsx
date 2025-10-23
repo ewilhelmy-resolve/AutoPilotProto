@@ -6,7 +6,8 @@
 
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Info, Sparkles, Zap, GitBranch, ChevronDown, Crown } from 'lucide-react'
+import { Info, Sparkles, Zap, GitBranch, ChevronDown, Crown, X } from 'lucide-react'
+import confetti from 'canvas-confetti'
 import RitaLayout from '../components/layouts/RitaLayout'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -17,6 +18,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import AutoRespondPanel from '../components/tickets/AutoRespondPanel'
 
 // Mock ticket data
 interface Ticket {
@@ -115,8 +117,8 @@ const TICKET_GROUPS: Record<string, { title: string; count: number; open: number
   '9': { title: 'Connection Troubleshooting', count: 4, open: 2, automated: 0 },
 }
 
-// Mock chart data
-const CHART_DATA = [
+// Initial chart data (will be made dynamic)
+const INITIAL_CHART_DATA = [
   { month: 'Jan', manual: 45, automated: 0 },
   { month: 'Feb', manual: 52, automated: 0 },
   { month: 'Mar', manual: 48, automated: 0 },
@@ -136,6 +138,48 @@ const chartConfig = {
   },
 }
 
+// Mock AI response generator
+const generateMockAIResponse = (ticket: Ticket): string => {
+  if (ticket.id === 'INC0006032') {
+    return `Hi {name},
+
+Thank you for reaching out about your email signature. I'd be happy to help you update it to reflect your new role.
+
+Here are the steps to update your email signature:
+
+• Open Outlook and navigate to File > Options > Mail
+• Click on "Signatures" button
+• Select your existing signature or create a new one
+• Update your information (name, contact details)
+• Click OK to save and apply to new messages
+
+Please let me know if these steps resolve your issue. If you need any additional assistance with formatting or have questions, I'm here to help!`
+  }
+
+  return `Hi {name},
+
+Thank you for contacting IT support. I've analyzed your issue and here's the recommended solution:
+
+Based on your request, I recommend the following steps to resolve this issue. Please follow the instructions carefully and let me know if you need any clarification.
+
+If this doesn't resolve your issue, please reply with additional details and I'll be happy to provide further assistance.`
+}
+
+// Mock KB articles
+const getMockKBArticles = (ticketId: string) => {
+  if (ticketId === 'INC0006032') {
+    return [
+      {
+        id: 'KB0004',
+        title: 'Email Signature Configuration Guide',
+        confidence: 92,
+        confidenceLabel: 'strong',
+      },
+    ]
+  }
+  return []
+}
+
 export default function TicketGroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
@@ -145,6 +189,167 @@ export default function TicketGroupDetailPage() {
 
   const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set())
   const [sortBy, setSortBy] = useState('newest')
+  const [showAutoRespondPanel, setShowAutoRespondPanel] = useState(false)
+  const [autoRespondIndex, setAutoRespondIndex] = useState(0)
+  const [trainingResults, setTrainingResults] = useState<{
+    trusted: number
+    taught: number
+    total: number
+  }>({ trusted: 0, taught: 0, total: 0 })
+  const [validatedCount, setValidatedCount] = useState(0)
+
+  // Real-time data states
+  const [chartData, setChartData] = useState(INITIAL_CHART_DATA)
+  const [openTicketsCount, setOpenTicketsCount] = useState(group?.open || 0)
+  const [automatedTicketsCount, setAutomatedTicketsCount] = useState(0)
+  const [automationPercentage, setAutomationPercentage] = useState(0)
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false)
+  const [timeSaved, setTimeSaved] = useState(0)
+  const [isAutoRespondEnabled, setIsAutoRespondEnabled] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showDisableModal, setShowDisableModal] = useState(false)
+
+  // Update real-time metrics (chart, open tickets, automation %)
+  const updateRealTimeMetrics = () => {
+    // Decrement open tickets count
+    setOpenTicketsCount((prev) => Math.max(0, prev - 1))
+
+    // Increment automated tickets count
+    setAutomatedTicketsCount((prev) => prev + 1)
+
+    // Calculate new automation percentage
+    const totalTickets = group?.count || 0
+    const newAutomatedCount = automatedTicketsCount + 1
+    const newPercentage = totalTickets > 0 ? Math.round((newAutomatedCount / totalTickets) * 100) : 0
+    setAutomationPercentage(newPercentage)
+
+    // Update chart data - add to automated count in current month (Jun)
+    setChartData((prev) => {
+      const updated = [...prev]
+      const lastIndex = updated.length - 1
+      updated[lastIndex] = {
+        ...updated[lastIndex],
+        automated: updated[lastIndex].automated + 1,
+        manual: Math.max(0, updated[lastIndex].manual - 1),
+      }
+      return updated
+    })
+
+    // Calculate time saved (assume 10 minutes per ticket)
+    setTimeSaved((prev) => prev + 10)
+  }
+
+  // Handle enable button click - show confirmation modal
+  const handleEnableClick = () => {
+    setShowConfirmModal(true)
+  }
+
+  // Fireworks confetti celebration
+  const triggerConfettiCelebration = () => {
+    const duration = 3000
+    const animationEnd = Date.now() + duration
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 }
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min
+    }
+
+    const interval = window.setInterval(() => {
+      const timeLeft = animationEnd - Date.now()
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval)
+      }
+
+      const particleCount = 50 * (timeLeft / duration)
+
+      // Fire confetti from random positions
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        colors: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ec4899'],
+      })
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        colors: ['#10b981', '#06b6d4', '#8b5cf6', '#f59e0b', '#ec4899'],
+      })
+    }, 250)
+  }
+
+  // Handle confirming auto-respond enablement
+  const handleConfirmEnable = () => {
+    console.log('🎉 Auto-Respond enabled for group!')
+
+    // Calculate metrics for ALL remaining open tickets
+    const remainingOpenTickets = openTicketsCount
+    const timePerTicket = 10 // minutes
+    const totalTimeSavedForGroup = remainingOpenTickets * timePerTicket
+
+    // Update all metrics to reflect full automation
+    setAutomatedTicketsCount(remainingOpenTickets)
+    setTimeSaved(totalTimeSavedForGroup)
+    setOpenTicketsCount(0) // All tickets are now automated
+    setAutomationPercentage(100) // 100% automated
+
+    // Update chart to show all tickets as automated
+    setChartData((prev) => {
+      const updated = [...prev]
+      const lastIndex = updated.length - 1
+      updated[lastIndex] = {
+        ...updated[lastIndex],
+        automated: updated[lastIndex].manual, // Transfer all manual to automated
+        manual: 0,
+      }
+      return updated
+    })
+
+    // Show success banner
+    setShowSuccessBanner(true)
+
+    // Mark auto-respond as enabled
+    setIsAutoRespondEnabled(true)
+
+    // Close modal
+    setShowConfirmModal(false)
+
+    // 🎉 CELEBRATION! Fire confetti
+    triggerConfettiCelebration()
+
+    // TODO: Send enable auto-respond action to backend via Rita Go → Actions → Rabbit pattern
+  }
+
+  // Handle disable button click - show confirmation modal
+  const handleDisableClick = () => {
+    setShowDisableModal(true)
+  }
+
+  // Handle confirming auto-respond disablement
+  const handleConfirmDisable = () => {
+    console.log('⚠️ Auto-Respond disabled for group')
+
+    // Reset metrics back to initial state
+    setAutomatedTicketsCount(0)
+    setTimeSaved(0)
+    setOpenTicketsCount(group?.open || 0)
+    setAutomationPercentage(0)
+
+    // Reset chart to initial state
+    setChartData(INITIAL_CHART_DATA)
+
+    // Hide success banner
+    setShowSuccessBanner(false)
+
+    // Mark auto-respond as disabled
+    setIsAutoRespondEnabled(false)
+
+    // Close modal
+    setShowDisableModal(false)
+
+    // TODO: Send disable auto-respond action to backend via Rita Go → Actions → Rabbit pattern
+  }
 
   const toggleTicketSelection = (ticketId: string) => {
     const newSelected = new Set(selectedTickets)
@@ -159,6 +364,90 @@ export default function TicketGroupDetailPage() {
   const clearSelection = () => {
     setSelectedTickets(new Set())
   }
+
+  const handleAutoRespond = () => {
+    setAutoRespondIndex(0)
+    setShowAutoRespondPanel(true)
+    setTrainingResults({ trusted: 0, taught: 0, total: selectedTickets.size })
+  }
+
+  const handleAutoRespondNext = () => {
+    setAutoRespondIndex((prev) => prev + 1)
+  }
+
+  const handleAutoRespondTrust = (ticketId: string, response: string) => {
+    console.log('✅ Trust feedback for ticket:', ticketId, 'Response:', response)
+
+    // Update training results
+    setTrainingResults((prev) => ({
+      ...prev,
+      trusted: prev.trusted + 1,
+    }))
+
+    // Update validated count for right sidebar
+    setValidatedCount((prev) => prev + 1)
+
+    // Update real-time metrics
+    updateRealTimeMetrics()
+
+    // TODO: Send positive feedback to backend via Rita Go → Actions → Rabbit pattern
+  }
+
+  const handleAutoRespondTeach = (ticketId: string, response: string, feedback?: string, tags?: string[]) => {
+    console.log('⚠️ Teach feedback for ticket:', ticketId, {
+      response,
+      feedback,
+      tags,
+    })
+
+    // Update training results
+    setTrainingResults((prev) => ({
+      ...prev,
+      taught: prev.taught + 1,
+    }))
+
+    // Update validated count for right sidebar
+    setValidatedCount((prev) => prev + 1)
+
+    // Update real-time metrics
+    updateRealTimeMetrics()
+
+    // TODO: Send negative feedback to backend via Rita Go → Actions → Rabbit pattern
+  }
+
+  const handleAutoRespondClose = () => {
+    setShowAutoRespondPanel(false)
+    setAutoRespondIndex(0)
+    clearSelection()
+  }
+
+  // Prepare tickets for auto-respond panel
+  const selectedTicketIds = Array.from(selectedTickets)
+  const autoRespondTickets = selectedTicketIds.map((ticketId) => {
+    const ticket = tickets.find((t) => t.id === ticketId)
+    if (!ticket) return null
+
+    return {
+      id: ticket.id,
+      priority: ticket.priority,
+      title: ticket.title,
+      description: `User needs assistance with ${ticket.title.toLowerCase()}. Please provide guidance on how to resolve this issue.`,
+      aiResponse: generateMockAIResponse(ticket),
+      kbArticles: getMockKBArticles(ticket.id),
+    }
+  }).filter((t) => t !== null) as Array<{
+    id: string
+    priority: 'low' | 'med' | 'high'
+    title: string
+    description: string
+    aiResponse: string
+    kbArticles: Array<{
+      id: string
+      title: string
+      confidence: number
+      confidenceLabel: string
+    }>
+  }>
 
   const getPriorityColor = (priority: 'low' | 'med' | 'high') => {
     switch (priority) {
@@ -195,6 +484,29 @@ export default function TicketGroupDetailPage() {
   return (
     <RitaLayout activePage="tickets">
       <div className="flex flex-col h-full">
+        {/* Success Banner */}
+        {showSuccessBanner && (
+          <div className="bg-green-50 border-b border-green-200 px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">🎉</div>
+              <div>
+                <h3 className="text-sm font-semibold text-green-900">
+                  Great Job! You just saved {Math.floor(timeSaved / 60)} hour{Math.floor(timeSaved / 60) !== 1 ? 's' : ''}.
+                </h3>
+                <p className="text-xs text-green-700">
+                  Your responses have been added to the local knowledge base
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowSuccessBanner(false)}
+              className="text-green-700 hover:text-green-900 p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 sm:py-6 border-b flex-shrink-0">
           <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-2">
@@ -213,8 +525,8 @@ export default function TicketGroupDetailPage() {
               <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
                 <span className="font-medium">{group.count} tickets</span>
-                <span className="text-muted-foreground">{group.open} open</span>
-                <span className="text-muted-foreground">{group.automated}% automated</span>
+                <span className="text-muted-foreground">{openTicketsCount} open</span>
+                <span className="text-muted-foreground">{automationPercentage}% automated</span>
                 <Button variant="outline" size="sm">
                   Knowledge base
                 </Button>
@@ -235,12 +547,12 @@ export default function TicketGroupDetailPage() {
                   <Info className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
-                  Rita learned from {group.count} tickets, automatically handled 0%
+                  Rita learned from {group.count} tickets, automatically handled {automationPercentage}%
                 </p>
 
                 {/* Chart */}
                 <ChartContainer config={chartConfig} className="h-48 sm:h-64">
-                  <LineChart data={CHART_DATA} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" vertical={false} />
                     <XAxis
                       dataKey="month"
@@ -296,7 +608,7 @@ export default function TicketGroupDetailPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleAutoRespond}>
                           <Sparkles className="w-4 h-4 mr-2" style={{ color: '#a855f7' }} />
                           Auto-Respond
                         </DropdownMenuItem>
@@ -322,7 +634,7 @@ export default function TicketGroupDetailPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs sm:text-sm font-medium">
-                      {group.open} Open
+                      {openTicketsCount} Open
                     </span>
                   </div>
 
@@ -339,32 +651,52 @@ export default function TicketGroupDetailPage() {
                 </div>
 
                 {/* Tickets */}
-                <div className="flex flex-col gap-2">
-                  {tickets.map((ticket, index) => (
-                    <Card
-                      key={`${ticket.id}-${index}`}
-                      className="p-3 sm:p-4 hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={selectedTickets.has(ticket.id)}
-                          onCheckedChange={() => toggleTicketSelection(ticket.id)}
-                          className="mt-0.5"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="font-medium text-xs sm:text-sm">{ticket.id}</span>
-                            <Badge className={`text-xs border ${getPriorityColor(ticket.priority)}`}>
-                              {getPriorityLabel(ticket.priority)}
-                            </Badge>
-                          </div>
-                          <p className="text-xs sm:text-sm text-muted-foreground break-words">{ticket.title}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground shrink-0">{ticket.time}</span>
+                {isAutoRespondEnabled ? (
+                  <Card className="p-6 sm:p-8 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="text-4xl">✨</div>
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Auto-Respond Enabled</h3>
+                        <p className="text-sm text-muted-foreground">
+                          All incoming tickets in this group will be automatically responded to based on your training.
+                        </p>
                       </div>
-                    </Card>
-                  ))}
-                </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-green-600 font-medium">✓ {automatedTicketsCount} tickets automated</span>
+                      </div>
+                    </div>
+                  </Card>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {tickets.map((ticket, index) => (
+                      <Card
+                        key={`${ticket.id}-${index}`}
+                        className="p-3 sm:p-4 hover:bg-accent transition-colors"
+                      >
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={selectedTickets.has(ticket.id)}
+                            onCheckedChange={() => toggleTicketSelection(ticket.id)}
+                            className="mt-0.5"
+                          />
+                          <div
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => navigate(`/tickets/${groupId}/${ticket.id}`)}
+                          >
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="font-medium text-xs sm:text-sm">{ticket.id}</span>
+                              <Badge className={`text-xs border ${getPriorityColor(ticket.priority)}`}>
+                                {getPriorityLabel(ticket.priority)}
+                              </Badge>
+                            </div>
+                            <p className="text-xs sm:text-sm text-muted-foreground break-words">{ticket.title}</p>
+                          </div>
+                          <span className="text-xs text-muted-foreground shrink-0">{ticket.time}</span>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -384,15 +716,15 @@ export default function TicketGroupDetailPage() {
                   <div className="border rounded-lg p-3">
                     <div className="grid grid-cols-3 gap-4">
                       <div className="flex flex-col text-center">
-                        <span className="text-2xl font-bold">0</span>
+                        <span className="text-2xl font-bold">{automatedTicketsCount}</span>
                         <span className="text-xs text-muted-foreground">Automated</span>
                       </div>
                       <div className="flex flex-col text-center">
-                        <span className="text-2xl font-bold">0</span>
+                        <span className="text-2xl font-bold">{timeSaved}</span>
                         <span className="text-xs text-muted-foreground">Mins Saved</span>
                       </div>
                       <div className="flex flex-col text-center">
-                        <span className="text-2xl font-bold">$0</span>
+                        <span className="text-2xl font-bold">${Math.round(timeSaved * 0.5)}</span>
                         <span className="text-xs text-muted-foreground">Savings</span>
                       </div>
                     </div>
@@ -406,85 +738,77 @@ export default function TicketGroupDetailPage() {
                         <Info className="w-4 h-4 text-muted-foreground" />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Low change to automate successfully
+                        {validatedCount === 0
+                          ? 'Low chance to automate successfully'
+                          : validatedCount < 10
+                          ? 'Moderate chance to automate successfully'
+                          : 'High chance to automate successfully ✓'}
                       </p>
                       <div className="py-2">
                         <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-400" style={{ width: '14px' }} />
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              validatedCount < 5
+                                ? 'bg-yellow-400'
+                                : validatedCount < 10
+                                ? 'bg-orange-400'
+                                : 'bg-green-500'
+                            }`}
+                            style={{ width: `${(validatedCount / 16) * 100}%` }}
+                          />
                         </div>
                       </div>
-                      <p className="text-sm">Validated 0/16</p>
+                      <p className="text-sm">Validated {validatedCount}/16</p>
                     </div>
                   </div>
 
                   {/* Group actions */}
-                  <div className="flex flex-col gap-2">
-                    <button className="flex items-center gap-2 px-1.5 py-2 rounded-md hover:bg-accent">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 px-1.5 py-2">
                       <span className="text-sm font-semibold">Group actions</span>
                       <ChevronDown className="w-4 h-4 opacity-50" />
-                    </button>
+                    </div>
 
                     <div className="flex flex-col gap-3">
                       {/* Auto-Respond */}
-                      <div className="flex flex-col">
-                        <div className="border border-b-0 rounded-t-lg p-3">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-1">
-                              <Sparkles className="w-4 h-4" style={{ color: '#a855f7' }} />
-                              <span className="flex-1 text-base">Auto-Respond</span>
-                              <Badge variant="outline" className="text-xs">Not enabled</Badge>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">Ready to validate</span>
-                              <span>16 tickets</span>
-                            </div>
-                          </div>
+                      <div className="flex items-center gap-3 py-2">
+                        <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#a855f7' }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium">Auto-Respond</div>
+                          <div className="text-xs text-muted-foreground">16 tickets ready</div>
                         </div>
-                        <Button variant="secondary" className="rounded-t-none rounded-b-lg h-9">
-                          Enable Auto-Answer
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 shrink-0"
+                          onClick={isAutoRespondEnabled ? handleDisableClick : handleEnableClick}
+                        >
+                          {isAutoRespondEnabled ? 'Disable' : 'Enable'}
                         </Button>
                       </div>
 
                       {/* Auto-Populate */}
-                      <div className="flex flex-col">
-                        <div className="border border-b-0 rounded-t-lg p-3">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-1">
-                              <Zap className="w-4 h-4" style={{ color: '#14b8a6' }} />
-                              <span className="flex-1 text-base">Auto-Populate</span>
-                              <Badge variant="outline" className="text-xs">Not enabled</Badge>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">Ticket enrichment</span>
-                              <span>All</span>
-                            </div>
-                          </div>
+                      <div className="flex items-center gap-3 py-2">
+                        <Zap className="w-4 h-4 shrink-0" style={{ color: '#14b8a6' }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium">Auto-Populate</div>
+                          <div className="text-xs text-muted-foreground">Ticket enrichment</div>
                         </div>
-                        <Button variant="secondary" className="rounded-t-none rounded-b-lg h-9">
-                          Enable Auto-Populate
+                        <Button variant="ghost" size="sm" className="h-8 shrink-0">
+                          Enable
                         </Button>
                       </div>
 
                       {/* Auto-Resolve */}
-                      <div className="flex flex-col">
-                        <div className="border border-b-0 rounded-t-lg p-3">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-1">
-                              <GitBranch className="w-4 h-4" style={{ color: '#0050c7' }} />
-                              <span className="flex-1 text-base">Auto-Resolve</span>
-                              <Badge className="text-xs bg-yellow-50 text-yellow-600 border-yellow-500 hover:bg-yellow-50">
-                                <Crown className="w-3 h-3 mr-1" />
-                                Premium
-                              </Badge>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">Pre-set workflow</span>
-                              <span>Preview</span>
-                            </div>
-                          </div>
+                      <div className="flex items-center gap-3 py-2">
+                        <GitBranch className="w-4 h-4 shrink-0" style={{ color: '#0050c7' }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium">Auto-Resolve</div>
+                          <div className="text-xs text-muted-foreground">Pre-set workflow</div>
                         </div>
-                        <Button variant="secondary" className="rounded-t-none rounded-b-lg h-9">
-                          Upgrade Auto-Resolve
+                        <Crown className="w-4 h-4 shrink-0 text-yellow-600" />
+                        <Button variant="ghost" size="sm" className="h-8 shrink-0">
+                          Upgrade
                         </Button>
                       </div>
                     </div>
@@ -499,6 +823,126 @@ export default function TicketGroupDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Auto Respond Panel */}
+      {showAutoRespondPanel && autoRespondTickets.length > 0 && (
+        <AutoRespondPanel
+          tickets={autoRespondTickets}
+          currentIndex={autoRespondIndex}
+          trainingResults={trainingResults}
+          onClose={handleAutoRespondClose}
+          onNext={handleAutoRespondNext}
+          onTrust={handleAutoRespondTrust}
+          onTeach={handleAutoRespondTeach}
+          onEnableAutoRespond={handleEnableClick}
+        />
+      )}
+
+      {/* Enable Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowConfirmModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-background rounded-lg shadow-2xl max-w-md w-full mx-4 p-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-1">Enable Auto-Respond?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    You are about to enable automated responses for all tickets in <strong>{group.title}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <p className="text-sm">This will:</p>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                  <li>• Send automated responses to <strong>{openTicketsCount} currently open tickets</strong></li>
+                  <li>• Automatically respond to <strong>all future tickets</strong> matching this group</li>
+                  <li>• Use the responses you've trained Rita with</li>
+                </ul>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmEnable}
+                  className="flex-1"
+                >
+                  Enable Auto-Respond
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Disable Confirmation Modal */}
+      {showDisableModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowDisableModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-background rounded-lg shadow-2xl max-w-md w-full mx-4 p-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-orange-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-1">Disable Auto-Respond?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    You are about to disable automated responses for <strong>{group.title}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                <p className="text-sm">This will:</p>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                  <li>• Stop sending automated responses to future tickets</li>
+                  <li>• Require manual handling of all tickets in this group</li>
+                  <li>• Your training data will be preserved for future use</li>
+                </ul>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDisableModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmDisable}
+                  className="flex-1"
+                >
+                  Disable Auto-Respond
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </RitaLayout>
   )
 }

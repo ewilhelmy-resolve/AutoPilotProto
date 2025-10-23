@@ -172,3 +172,25 @@
     font-family: Season Mix;
     }
 }
+
+/* Confetti animation for celebration */
+@keyframes confetti {
+  0% {
+    transform: translate(0, 0) rotate(var(--rotation));
+    opacity: 1;
+    scale: 1;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.2;
+  }
+  100% {
+    transform: translate(var(--velocity-x), var(--velocity-y)) rotate(calc(var(--rotation) + 360deg));
+    opacity: 0;
+    scale: 0.5;
+  }
+}
+
+.animate-confetti {
+  animation: confetti 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
