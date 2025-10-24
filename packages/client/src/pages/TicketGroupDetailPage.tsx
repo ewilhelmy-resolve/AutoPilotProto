@@ -6,7 +6,7 @@
 
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Info, Sparkles, Zap, GitBranch, ChevronDown, Crown, X, Wand2 } from 'lucide-react'
+import { Info, Sparkles, Zap, GitBranch, ChevronDown, Crown, X, Wand2, TrendingUp, Download, GraduationCap, MessageSquare, FileText } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import RitaLayout from '../components/layouts/RitaLayout'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,7 @@ import AutoRespondPanel from '../components/tickets/AutoRespondPanel'
 import AutoPopulatePanel from '../components/tickets/AutoPopulatePanel'
 import CreateKnowledgePanel from '../components/tickets/CreateKnowledgePanel'
 import AutoResolveModal from '../components/tickets/AutoResolveModal'
+import ActionsPanel from '../components/tickets/ActionsPanel'
 
 // Mock ticket data
 interface Ticket {
@@ -238,6 +239,114 @@ export default function TicketGroupDetailPage() {
 
   // Auto-Resolve states
   const [showAutoResolveModal, setShowAutoResolveModal] = useState(false)
+
+  // Actions Panel state
+  const [showActionsPanel, setShowActionsPanel] = useState(false)
+
+  // Define available actions for this ticket group
+  const availableActions = [
+    // Automation actions
+    {
+      id: 'auto-respond',
+      name: 'Auto-Respond',
+      description: 'Train Rita to draft responses based on your knowledge base',
+      icon: <MessageSquare className="w-5 h-5 text-blue-600" />,
+      category: 'automation' as const,
+      status: isAutoRespondEnabled ? ('enabled' as const) : ('available' as const),
+      creditCost: 0,
+      onAction: () => {
+        setShowActionsPanel(false)
+        handleTrainRita()
+      },
+    },
+    {
+      id: 'auto-populate',
+      name: 'Auto-Populate',
+      description: 'Automatically fill ticket fields with AI predictions',
+      icon: <Sparkles className="w-5 h-5 text-purple-600" />,
+      category: 'automation' as const,
+      status: isAutoPopulateEnabled ? ('enabled' as const) : ('available' as const),
+      creditCost: 0,
+      onAction: () => {
+        setShowActionsPanel(false)
+        handleEnableAutoPopulate()
+      },
+    },
+    {
+      id: 'auto-resolve',
+      name: 'Auto-Resolve',
+      description: 'Automated end-to-end ticket resolution with workflow preview',
+      icon: <Crown className="w-5 h-5 text-amber-600" />,
+      category: 'automation' as const,
+      status: 'premium' as const,
+      isPremium: true,
+      badge: 'Preview Available',
+      creditCost: undefined,
+      onAction: () => {
+        setShowActionsPanel(false)
+        setShowAutoResolveModal(true)
+      },
+    },
+    // Knowledge actions
+    {
+      id: 'fill-knowledge-gap',
+      name: 'Fill Knowledge Gap',
+      description: 'Generate AI-powered knowledge base article for missing information',
+      icon: <FileText className="w-5 h-5 text-yellow-600" />,
+      category: 'knowledge' as const,
+      status: hasKnowledgeGap ? ('available' as const) : ('disabled' as const),
+      creditCost: 1,
+      badge: hasKnowledgeGap ? 'Gap Detected' : undefined,
+      onAction: () => {
+        if (hasKnowledgeGap) {
+          setShowActionsPanel(false)
+          setShowCreateKnowledgePanel(true)
+        }
+      },
+    },
+    // Analysis actions (placeholder for future)
+    {
+      id: 'view-trends',
+      name: 'View Trends',
+      description: 'Analyze ticket patterns and trends over time',
+      icon: <TrendingUp className="w-5 h-5 text-green-600" />,
+      category: 'analysis' as const,
+      status: 'available' as const,
+      creditCost: 0,
+      onAction: () => {
+        setShowActionsPanel(false)
+        // Future: Navigate to trends view
+      },
+    },
+    {
+      id: 'export-data',
+      name: 'Export Data',
+      description: 'Export ticket group data to CSV or Excel',
+      icon: <Download className="w-5 h-5 text-gray-600" />,
+      category: 'analysis' as const,
+      status: 'available' as const,
+      creditCost: 0,
+      onAction: () => {
+        setShowActionsPanel(false)
+        // Future: Trigger export
+      },
+    },
+    // Training actions (placeholder for future)
+    {
+      id: 'review-training',
+      name: 'Review Training',
+      description: 'See how Rita learned from your feedback and corrections',
+      icon: <GraduationCap className="w-5 h-5 text-indigo-600" />,
+      category: 'training' as const,
+      status: trainingData.total > 0 ? ('available' as const) : ('disabled' as const),
+      creditCost: 0,
+      badge: trainingData.total > 0 ? `${trainingData.total} sessions` : undefined,
+      onAction: () => {
+        setShowActionsPanel(false)
+        // Future: Show training history
+      },
+    },
+  ]
 
   // Knowledge confetti celebration (book/star theme)
   const triggerKnowledgeCelebration = () => {
@@ -867,6 +976,15 @@ export default function TicketGroupDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Actions Button */}
+            <Button
+              onClick={() => setShowActionsPanel(true)}
+              className="gap-2 bg-primary hover:bg-primary/90"
+            >
+              <Zap className="w-4 h-4" />
+              <span className="hidden sm:inline">Actions</span>
+            </Button>
           </div>
         </div>
 
@@ -1466,6 +1584,15 @@ export default function TicketGroupDetailPage() {
         onValidate={handleAutoResolveValidate}
         groupTitle={group.title}
         ticketCount={group.count}
+      />
+
+      {/* Actions Panel */}
+      <ActionsPanel
+        isOpen={showActionsPanel}
+        onClose={() => setShowActionsPanel(false)}
+        groupTitle={group.title}
+        ticketCount={group.count}
+        actions={availableActions}
       />
     </RitaLayout>
   )
