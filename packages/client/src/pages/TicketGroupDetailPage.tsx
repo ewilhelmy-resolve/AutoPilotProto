@@ -19,6 +19,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import AutoRespondPanel from '../components/tickets/AutoRespondPanel'
+import EnrichmentModal from '../components/tickets/EnrichmentModal'
 
 // Mock ticket data
 interface Ticket {
@@ -209,6 +210,23 @@ export default function TicketGroupDetailPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showDisableModal, setShowDisableModal] = useState(false)
 
+  // Auto-populate states
+  const [showEnrichmentModal, setShowEnrichmentModal] = useState(false)
+  const [enrichmentContext, setEnrichmentContext] = useState<'group' | 'selected'>('group')
+  const [isAutoPopulateEnabled, setIsAutoPopulateEnabled] = useState(false)
+  const [enrichedTicketsCount, setEnrichedTicketsCount] = useState(0)
+  const [showEnrichmentSuccess, setShowEnrichmentSuccess] = useState(false)
+  const [lastEnrichmentCount, setLastEnrichmentCount] = useState(0)
+  const [pendingUpdates, setPendingUpdates] = useState<{
+    count: number
+    details: Array<{
+      type: 'improved' | 'low-confidence' | 'new-mapping' | 'manual-review'
+      ticketCount: number
+      description: string
+    }>
+  } | null>(null)
+  const [showReviewUpdatesModal, setShowReviewUpdatesModal] = useState(false)
+
   // Update real-time metrics (chart, open tickets, automation %)
   const updateRealTimeMetrics = () => {
     // Decrement open tickets count
@@ -351,6 +369,167 @@ export default function TicketGroupDetailPage() {
     // TODO: Send disable auto-respond action to backend via Rita Go → Actions → Rabbit pattern
   }
 
+  // Mock field predictions for auto-populate
+  const fieldPredictions = [
+    { type: 'Category', currentValue: 'General Inquiry', predictedValue: 'Email Signature' },
+    { type: 'Sub Category', currentValue: '--', predictedValue: 'Applications' },
+    { type: 'Priority', currentValue: '--', predictedValue: 'Low' },
+    { type: 'CI', currentValue: '--', predictedValue: 'Active Directory' },
+    { type: 'Business Service', currentValue: '--', predictedValue: 'Identity Management' },
+  ]
+
+  // Handle auto-populate for selected tickets
+  const handleAutoPopulateSelected = () => {
+    setEnrichmentContext('selected')
+    setShowEnrichmentModal(true)
+  }
+
+  // Handle enable auto-populate for entire group
+  const handleEnableAutoPopulate = () => {
+    setEnrichmentContext('group')
+    setShowEnrichmentModal(true)
+  }
+
+  // Handle applying pending updates
+  const handleApplyUpdates = () => {
+    if (!pendingUpdates) return
+
+    console.log('✅ Applying updates:', pendingUpdates)
+
+    // Update enriched count with the new tickets
+    setEnrichedTicketsCount((prev) => prev + pendingUpdates.count)
+
+    // Show success message
+    setLastEnrichmentCount(pendingUpdates.count)
+    setShowEnrichmentSuccess(true)
+
+    // Fire celebration
+    triggerEnrichmentCelebration()
+
+    // Clear pending updates
+    setPendingUpdates(null)
+    setShowReviewUpdatesModal(false)
+
+    // TODO: Send update action to backend
+  }
+
+  // Handle dismissing pending updates
+  const handleDismissUpdates = () => {
+    console.log('⏭️ Dismissing updates')
+    setPendingUpdates(null)
+    setShowReviewUpdatesModal(false)
+  }
+
+  // Sparkle confetti celebration for enrichment
+  const triggerEnrichmentCelebration = () => {
+    const count = 200
+    const defaults = {
+      origin: { y: 0.7 },
+      zIndex: 100,
+    }
+
+    function fire(particleRatio: number, opts: any) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio),
+      })
+    }
+
+    // Fire sparkle bursts with teal/green theme
+    fire(0.25, {
+      spread: 26,
+      startVelocity: 55,
+      shapes: ['star'],
+      colors: ['#14b8a6', '#06b6d4', '#10b981', '#34d399', '#6ee7b7'],
+    })
+    fire(0.2, {
+      spread: 60,
+      shapes: ['star'],
+      colors: ['#14b8a6', '#06b6d4', '#10b981', '#34d399', '#6ee7b7'],
+    })
+    fire(0.35, {
+      spread: 100,
+      decay: 0.91,
+      scalar: 0.8,
+      shapes: ['star'],
+      colors: ['#14b8a6', '#06b6d4', '#10b981', '#34d399', '#6ee7b7'],
+    })
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 25,
+      decay: 0.92,
+      scalar: 1.2,
+      shapes: ['star'],
+      colors: ['#14b8a6', '#06b6d4', '#10b981', '#34d399', '#6ee7b7'],
+    })
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 45,
+      shapes: ['star'],
+      colors: ['#14b8a6', '#06b6d4', '#10b981', '#34d399', '#6ee7b7'],
+    })
+  }
+
+  // Simulate detecting updates after enabling (mock for demo)
+  const simulateUpdateDetection = () => {
+    // Simulate detection after 8 seconds
+    setTimeout(() => {
+      const mockUpdates = {
+        count: 12,
+        details: [
+          {
+            type: 'improved' as const,
+            ticketCount: 8,
+            description: 'Higher confidence predictions available (70% → 95%)',
+          },
+          {
+            type: 'new-mapping' as const,
+            ticketCount: 4,
+            description: 'New CI mappings detected based on recent patterns',
+          },
+        ],
+      }
+      setPendingUpdates(mockUpdates)
+      console.log('🔔 Auto-Populate: Updates detected', mockUpdates)
+    }, 8000)
+  }
+
+  // Handle confirming enrichment
+  const handleConfirmEnrichment = () => {
+    const ticketsToEnrich = enrichmentContext === 'group' ? openTicketsCount : selectedTickets.size
+
+    console.log(`🎨 Auto-Populate: Enriching ${ticketsToEnrich} tickets`)
+
+    // Update enriched count
+    setEnrichedTicketsCount((prev) => prev + ticketsToEnrich)
+    setLastEnrichmentCount(ticketsToEnrich)
+
+    if (enrichmentContext === 'group') {
+      // Mark as enabled for entire group
+      setIsAutoPopulateEnabled(true)
+
+      // Simulate detection of updates after enabling
+      simulateUpdateDetection()
+    }
+
+    // Close modal
+    setShowEnrichmentModal(false)
+
+    // Clear selection if enriching selected tickets
+    if (enrichmentContext === 'selected') {
+      clearSelection()
+    }
+
+    // Show success banner
+    setShowEnrichmentSuccess(true)
+
+    // 🎉 CELEBRATION! Fire sparkle confetti
+    triggerEnrichmentCelebration()
+
+    // TODO: Send enrichment data to backend via Rita Go → Actions → Rabbit pattern
+  }
+
   const toggleTicketSelection = (ticketId: string) => {
     const newSelected = new Set(selectedTickets)
     if (newSelected.has(ticketId)) {
@@ -484,7 +663,7 @@ export default function TicketGroupDetailPage() {
   return (
     <RitaLayout activePage="tickets">
       <div className="flex flex-col h-full">
-        {/* Success Banner */}
+        {/* Auto-Respond Success Banner */}
         {showSuccessBanner && (
           <div className="bg-green-50 border-b border-green-200 px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -501,6 +680,29 @@ export default function TicketGroupDetailPage() {
             <button
               onClick={() => setShowSuccessBanner(false)}
               className="text-green-700 hover:text-green-900 p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Auto-Populate Success Banner */}
+        {showEnrichmentSuccess && (
+          <div className="bg-teal-50 border-b border-teal-200 px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">✨</div>
+              <div>
+                <h3 className="text-sm font-semibold text-teal-900">
+                  Success! {lastEnrichmentCount} ticket{lastEnrichmentCount !== 1 ? 's' : ''} enriched with AI predictions
+                </h3>
+                <p className="text-xs text-teal-700">
+                  Ticket fields have been automatically populated based on historical data
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowEnrichmentSuccess(false)}
+              className="text-teal-700 hover:text-teal-900 p-1"
             >
               <X className="w-4 h-4" />
             </button>
@@ -612,7 +814,7 @@ export default function TicketGroupDetailPage() {
                           <Sparkles className="w-4 h-4 mr-2" style={{ color: '#a855f7' }} />
                           Auto-Respond
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleAutoPopulateSelected}>
                           <Zap className="w-4 h-4 mr-2" style={{ color: '#14b8a6' }} />
                           Auto-Populate
                         </DropdownMenuItem>
@@ -792,11 +994,33 @@ export default function TicketGroupDetailPage() {
                         <Zap className="w-4 h-4 shrink-0" style={{ color: '#14b8a6' }} />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium">Auto-Populate</div>
-                          <div className="text-xs text-muted-foreground">Ticket enrichment</div>
+                          <div className="text-xs text-muted-foreground">
+                            {isAutoPopulateEnabled ? `${enrichedTicketsCount} enriched` : 'Ticket enrichment'}
+                          </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-8 shrink-0">
-                          Enable
-                        </Button>
+                        {isAutoPopulateEnabled && pendingUpdates ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 shrink-0 gap-1"
+                            onClick={() => setShowReviewUpdatesModal(true)}
+                          >
+                            Enabled
+                            <span className="bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 font-semibold">
+                              {pendingUpdates.count}
+                            </span>
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 shrink-0"
+                            onClick={handleEnableAutoPopulate}
+                            disabled={isAutoPopulateEnabled && !pendingUpdates}
+                          >
+                            {isAutoPopulateEnabled ? 'Enabled' : 'Enable'}
+                          </Button>
+                        )}
                       </div>
 
                       {/* Auto-Resolve */}
@@ -937,6 +1161,121 @@ export default function TicketGroupDetailPage() {
                   className="flex-1"
                 >
                   Disable Auto-Respond
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enrichment Modal for Auto-Populate */}
+      <EnrichmentModal
+        isOpen={showEnrichmentModal}
+        onClose={() => setShowEnrichmentModal(false)}
+        onConfirm={handleConfirmEnrichment}
+        ticketCount={enrichmentContext === 'group' ? openTicketsCount : selectedTickets.size}
+        isGroupLevel={enrichmentContext === 'group'}
+        predictions={fieldPredictions}
+      />
+
+      {/* Review Updates Modal */}
+      {showReviewUpdatesModal && pendingUpdates && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowReviewUpdatesModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-background rounded-lg shadow-2xl max-w-lg w-full mx-4 p-6">
+            <div className="flex flex-col gap-4">
+              {/* Header */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Zap className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold mb-1">
+                      {pendingUpdates.count} Tickets Have Updates Available
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Rita detected improved predictions and new patterns for existing tickets
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReviewUpdatesModal(false)}
+                  className="text-muted-foreground hover:text-foreground p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Updates List */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="divide-y">
+                  {pendingUpdates.details.map((update, index) => (
+                    <div key={index} className="p-4 flex items-start gap-3">
+                      <div className="shrink-0 mt-0.5">
+                        {update.type === 'improved' && (
+                          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                            <span className="text-green-600 text-sm">↑</span>
+                          </div>
+                        )}
+                        {update.type === 'new-mapping' && (
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span className="text-blue-600 text-sm">✦</span>
+                          </div>
+                        )}
+                        {update.type === 'low-confidence' && (
+                          <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                            <span className="text-yellow-600 text-sm">⚠</span>
+                          </div>
+                        )}
+                        {update.type === 'manual-review' && (
+                          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                            <span className="text-red-600 text-sm">!</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium mb-1">
+                          {update.ticketCount} ticket{update.ticketCount !== 1 ? 's' : ''}
+                        </div>
+                        <div className="text-sm text-muted-foreground">{update.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Info Note */}
+              <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900">
+                  <strong>Smart Updates</strong>
+                  <p className="text-blue-700 mt-0.5">
+                    These updates are automatically detected based on model improvements and new patterns learned from recent tickets.
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleDismissUpdates}
+                  className="flex-1"
+                >
+                  Dismiss
+                </Button>
+                <Button
+                  onClick={handleApplyUpdates}
+                  className="flex-1"
+                >
+                  Review & Apply Updates
                 </Button>
               </div>
             </div>
