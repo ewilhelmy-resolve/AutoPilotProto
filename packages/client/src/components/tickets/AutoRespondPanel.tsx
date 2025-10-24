@@ -105,6 +105,7 @@ export default function AutoRespondPanel({
   }, [currentIndex, currentTicket])
 
   const handleTrust = () => {
+    if (!currentTicket) return
     setCelebrating(true)
     onTrust(currentTicket.id, editedResponse)
 
@@ -124,6 +125,7 @@ export default function AutoRespondPanel({
   }
 
   const handleSkipFeedback = () => {
+    if (!currentTicket) return
     onTeach(currentTicket.id, editedResponse)
     if (currentIndex < tickets.length - 1) {
       onNext()
@@ -134,6 +136,7 @@ export default function AutoRespondPanel({
   }
 
   const handleSubmitFeedback = () => {
+    if (!currentTicket) return
     onTeach(currentTicket.id, editedResponse, feedbackText, selectedTags)
     if (currentIndex < tickets.length - 1) {
       onNext()
@@ -151,6 +154,11 @@ export default function AutoRespondPanel({
 
   const progressPercentage = ((currentIndex + 1) / tickets.length) * 100
   const confidenceImprovement = Math.round((trainingResults.trusted / trainingResults.total) * 100)
+
+  // Safety check - return null if no current ticket
+  if (!currentTicket && !showSummary) {
+    return null
+  }
 
   // Summary View
   if (showSummary) {

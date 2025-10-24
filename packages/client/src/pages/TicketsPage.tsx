@@ -12,6 +12,7 @@ import { Ticket, TrendingUp } from 'lucide-react'
 import RitaLayout from '../components/layouts/RitaLayout'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 // Mock ticket group data
@@ -21,18 +22,19 @@ interface TicketGroup {
   count: number
   automationPercent: number
   manualPercent: number
+  knowledgeCount: number
 }
 
 const MOCK_TICKET_GROUPS: TicketGroup[] = [
-  { id: '1', title: 'Email Signatures', count: 976, automationPercent: 0, manualPercent: 87 },
-  { id: '2', title: 'Password Resets', count: 743, automationPercent: 0, manualPercent: 0 },
-  { id: '3', title: 'Network Connectivity', count: 564, automationPercent: 0, manualPercent: 78 },
-  { id: '4', title: 'Application Crashes', count: 121, automationPercent: 0, manualPercent: 37 },
-  { id: '5', title: 'VPN Issues', count: 45, automationPercent: 0, manualPercent: 78 },
-  { id: '6', title: 'System Overload', count: 32, automationPercent: 0, manualPercent: 0 },
-  { id: '7', title: 'Signatures Preferences', count: 21, automationPercent: 0, manualPercent: 87 },
-  { id: '8', title: 'Performance Optimization', count: 11, automationPercent: 0, manualPercent: 58 },
-  { id: '9', title: 'Connection Troubleshooting', count: 4, automationPercent: 0, manualPercent: 87 },
+  { id: '1', title: 'Email Signatures', count: 976, automationPercent: 87, manualPercent: 13, knowledgeCount: 3 },
+  { id: '2', title: 'Password Resets', count: 743, automationPercent: 65, manualPercent: 21, knowledgeCount: 1 },
+  { id: '3', title: 'Network Connectivity', count: 564, automationPercent: 46, manualPercent: 7, knowledgeCount: 2 },
+  { id: '4', title: 'Application Crashes', count: 121, automationPercent: 54, manualPercent: 27, knowledgeCount: 1 },
+  { id: '5', title: 'VPN Issues', count: 45, automationPercent: 0, manualPercent: 39, knowledgeCount: 0 },
+  { id: '6', title: 'System Overload', count: 32, automationPercent: 0, manualPercent: 57, knowledgeCount: 0 },
+  { id: '7', title: 'Signatures Preferences', count: 21, automationPercent: 16, manualPercent: 57, knowledgeCount: 1 },
+  { id: '8', title: 'Performance Optimization', count: 11, automationPercent: 0, manualPercent: 12, knowledgeCount: 0 },
+  { id: '9', title: 'Connection Troubleshooting', count: 4, automationPercent: 62, manualPercent: 8, knowledgeCount: 1 },
 ]
 
 export default function TicketsPage() {
@@ -180,42 +182,80 @@ export default function TicketsPage() {
 
               {/* Ticket Groups Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {MOCK_TICKET_GROUPS.map((group) => (
-                  <Card
-                    key={group.id}
-                    className="p-4 hover:bg-accent transition-colors cursor-pointer"
-                    onClick={() => navigate(`/tickets/${group.id}`)}
-                  >
-                    <div className="flex flex-col gap-4">
-                      {/* Title */}
-                      <h3 className="text-sm font-medium">{group.title}</h3>
+                {MOCK_TICKET_GROUPS.map((group) => {
+                  const hasContent = group.knowledgeCount > 0
+                  const isAutomated = hasContent && group.automationPercent > 0
 
-                      {/* Count */}
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold">{group.count}</span>
-                        <span className="text-xs text-muted-foreground uppercase">Ticket Total</span>
-                      </div>
+                  return (
+                    <Card
+                      key={group.id}
+                      className="p-4 hover:bg-accent transition-colors cursor-pointer"
+                      onClick={() => navigate(`/tickets/${group.id}`)}
+                    >
+                      <div className="flex flex-col gap-3">
+                        {/* Header - Title and Status Badge */}
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="text-base font-medium flex-1">{group.title}</h3>
+                          {isAutomated ? (
+                            <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100 shrink-0">
+                              Automated
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-300 shrink-0">
+                              Manual
+                            </Badge>
+                          )}
+                        </div>
 
-                      {/* Progress Bar */}
-                      <div className="flex flex-col gap-2">
-                        <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                          {/* Manual bar (purple) - shows first since automation is 0% initially */}
-                          <div
-                            className="h-full transition-all"
-                            style={{
-                              width: `${group.manualPercent}%`,
-                              backgroundColor: '#9747FF'
-                            }}
-                          />
+                        {/* Count and Content Badge */}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-4xl font-bold">{group.count}</span>
+                          <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-300 w-fit text-xs">
+                            {hasContent ? 'Content found' : 'No content'}
+                          </Badge>
                         </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span style={{ color: '#07EFD4' }}>Automation {group.automationPercent}%</span>
-                          <span style={{ color: '#9747FF' }}>Manual {group.manualPercent}%</span>
+
+                        {/* Progress Bar */}
+                        <div className="flex flex-col gap-2">
+                          <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden flex">
+                            {/* Automated section (cyan) */}
+                            {group.automationPercent > 0 && (
+                              <div
+                                className="h-full transition-all"
+                                style={{
+                                  width: `${group.automationPercent}%`,
+                                  backgroundColor: '#07EFD4'
+                                }}
+                              />
+                            )}
+                            {/* Manual section (purple) */}
+                            {group.manualPercent > 0 && (
+                              <div
+                                className="h-full transition-all"
+                                style={{
+                                  width: `${group.manualPercent}%`,
+                                  backgroundColor: '#9747FF'
+                                }}
+                              />
+                            )}
+                          </div>
+
+                          {/* Legend */}
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#07EFD4' }} />
+                              <span className="text-muted-foreground">Automated {group.automationPercent}%</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#9747FF' }} />
+                              <span className="text-muted-foreground">Manual {group.manualPercent}%</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  )
+                })}
               </div>
             </div>
           </div>

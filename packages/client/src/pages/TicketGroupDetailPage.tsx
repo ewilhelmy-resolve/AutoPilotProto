@@ -6,7 +6,7 @@
 
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Info, Sparkles, Zap, GitBranch, ChevronDown, Crown, X } from 'lucide-react'
+import { Info, Sparkles, Zap, GitBranch, ChevronDown, Crown, X, Wand2 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import RitaLayout from '../components/layouts/RitaLayout'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import AutoRespondPanel from '../components/tickets/AutoRespondPanel'
 import EnrichmentModal from '../components/tickets/EnrichmentModal'
+import CreateKnowledgePanel from '../components/tickets/CreateKnowledgePanel'
 
 // Mock ticket data
 interface Ticket {
@@ -106,16 +107,16 @@ const TICKETS_BY_GROUP: Record<string, Ticket[]> = {
 }
 
 // Mock ticket group data
-const TICKET_GROUPS: Record<string, { title: string; count: number; open: number; automated: number }> = {
-  '1': { title: 'Email Signatures', count: 976, open: 14, automated: 0 },
-  '2': { title: 'Password Resets', count: 743, open: 8, automated: 0 },
-  '3': { title: 'Network Connectivity', count: 564, open: 12, automated: 0 },
-  '4': { title: 'Application Crashes', count: 121, open: 6, automated: 0 },
-  '5': { title: 'VPN Issues', count: 45, open: 5, automated: 0 },
-  '6': { title: 'System Overload', count: 32, open: 4, automated: 0 },
-  '7': { title: 'Signatures Preferences', count: 21, open: 3, automated: 0 },
-  '8': { title: 'Performance Optimization', count: 11, open: 2, automated: 0 },
-  '9': { title: 'Connection Troubleshooting', count: 4, open: 2, automated: 0 },
+const TICKET_GROUPS: Record<string, { title: string; count: number; open: number; automated: number; knowledgeCount: number }> = {
+  '1': { title: 'Email Signatures', count: 976, open: 14, automated: 0, knowledgeCount: 3 },
+  '2': { title: 'Password Resets', count: 743, open: 8, automated: 0, knowledgeCount: 1 },
+  '3': { title: 'Network Connectivity', count: 564, open: 12, automated: 0, knowledgeCount: 2 },
+  '4': { title: 'Application Crashes', count: 121, open: 6, automated: 0, knowledgeCount: 1 },
+  '5': { title: 'VPN Issues', count: 45, open: 5, automated: 0, knowledgeCount: 0 },
+  '6': { title: 'System Overload', count: 32, open: 4, automated: 0, knowledgeCount: 0 },
+  '7': { title: 'Signatures Preferences', count: 21, open: 3, automated: 0, knowledgeCount: 1 },
+  '8': { title: 'Performance Optimization', count: 11, open: 2, automated: 0, knowledgeCount: 0 },
+  '9': { title: 'Connection Troubleshooting', count: 4, open: 2, automated: 0, knowledgeCount: 1 },
 }
 
 // Initial chart data (will be made dynamic)
@@ -226,6 +227,91 @@ export default function TicketGroupDetailPage() {
     }>
   } | null>(null)
   const [showReviewUpdatesModal, setShowReviewUpdatesModal] = useState(false)
+
+  // Knowledge states
+  const [showCreateKnowledgePanel, setShowCreateKnowledgePanel] = useState(false)
+  const [knowledgeCount, setKnowledgeCount] = useState(group?.knowledgeCount || 0)
+  const [showKnowledgeSuccess, setShowKnowledgeSuccess] = useState(false)
+  const [lastCreatedArticle, setLastCreatedArticle] = useState('')
+  const hasKnowledgeGap = knowledgeCount === 0
+
+  // Knowledge confetti celebration (book/star theme)
+  const triggerKnowledgeCelebration = () => {
+    const count = 200
+    const defaults = {
+      origin: { y: 0.7 },
+      zIndex: 100,
+    }
+
+    function fire(particleRatio: number, opts: any) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio),
+      })
+    }
+
+    // Fire sparkle bursts with blue/purple theme (knowledge colors)
+    fire(0.25, {
+      spread: 26,
+      startVelocity: 55,
+      shapes: ['circle'],
+      colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc'],
+    })
+    fire(0.2, {
+      spread: 60,
+      shapes: ['circle'],
+      colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc'],
+    })
+    fire(0.35, {
+      spread: 100,
+      decay: 0.91,
+      scalar: 0.8,
+      shapes: ['circle'],
+      colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc'],
+    })
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 25,
+      decay: 0.92,
+      scalar: 1.2,
+      shapes: ['circle'],
+      colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc'],
+    })
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 45,
+      shapes: ['circle'],
+      colors: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc'],
+    })
+  }
+
+  // Handle creating knowledge article
+  const handleCreateKnowledge = (article: { title: string; content: string; sources: string[] }) => {
+    console.log('📚 Creating knowledge article:', article)
+
+    // In real implementation, this would:
+    // 1. Send article to backend via Rita Go → Actions → Rabbit pattern
+    // 2. Store article in knowledge base
+    // 3. Update group metadata
+
+    // Update knowledge count
+    setKnowledgeCount((prev) => prev + 1)
+
+    // Store article title for success message
+    setLastCreatedArticle(article.title)
+
+    // Close the panel
+    setShowCreateKnowledgePanel(false)
+
+    // Show success banner
+    setShowKnowledgeSuccess(true)
+
+    // 🎉 CELEBRATION! Fire knowledge confetti
+    triggerKnowledgeCelebration()
+
+    // TODO: Send create knowledge action to backend via Rita Go → Actions → Rabbit pattern
+  }
 
   // Update real-time metrics (chart, open tickets, automation %)
   const updateRealTimeMetrics = () => {
@@ -709,6 +795,29 @@ export default function TicketGroupDetailPage() {
           </div>
         )}
 
+        {/* Knowledge Article Success Banner */}
+        {showKnowledgeSuccess && (
+          <div className="bg-blue-50 border-b border-blue-200 px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">📚</div>
+              <div>
+                <h3 className="text-sm font-semibold text-blue-900">
+                  Knowledge article created successfully!
+                </h3>
+                <p className="text-xs text-blue-700">
+                  "{lastCreatedArticle}" has been added to the knowledge base
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowKnowledgeSuccess(false)}
+              className="text-blue-700 hover:text-blue-900 p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 sm:py-6 border-b flex-shrink-0">
           <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-2">
@@ -729,9 +838,15 @@ export default function TicketGroupDetailPage() {
                 <span className="font-medium">{group.count} tickets</span>
                 <span className="text-muted-foreground">{openTicketsCount} open</span>
                 <span className="text-muted-foreground">{automationPercentage}% automated</span>
-                <Button variant="outline" size="sm">
-                  Knowledge base
-                </Button>
+                {knowledgeCount > 0 ? (
+                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">
+                    Knowledge found
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-300">
+                    Knowledge missing
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -910,7 +1025,7 @@ export default function TicketGroupDetailPage() {
               <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="w-full">
                   <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
-                  <TabsTrigger value="knowledge" className="flex-1">Knowledge (3)</TabsTrigger>
+                  <TabsTrigger value="knowledge" className="flex-1">Knowledge ({knowledgeCount})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-4 space-y-4">
@@ -964,6 +1079,32 @@ export default function TicketGroupDetailPage() {
                     </div>
                   </div>
 
+                  {/* Knowledge Gap Detection Alert */}
+                  {hasKnowledgeGap && (
+                    <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-start gap-2">
+                          <Wand2 className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-semibold text-foreground mb-1">
+                              Knowledge Gap Detected
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              No knowledge articles found for this cluster.Rita recommends creating one to enable Auto-Answer.
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-medium"
+                          onClick={() => setShowCreateKnowledgePanel(true)}
+                        >
+                          Create Knowledge Article
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Group actions */}
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-2 px-1.5 py-2">
@@ -977,13 +1118,16 @@ export default function TicketGroupDetailPage() {
                         <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#a855f7' }} />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium">Auto-Respond</div>
-                          <div className="text-xs text-muted-foreground">16 tickets ready</div>
+                          <div className="text-xs text-muted-foreground">
+                            {hasKnowledgeGap ? 'Needs knowledge' : '16 tickets ready'}
+                          </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-8 shrink-0"
-                          onClick={isAutoRespondEnabled ? handleDisableClick : handleEnableClick}
+                          onClick={hasKnowledgeGap ? () => setShowCreateKnowledgePanel(true) : (isAutoRespondEnabled ? handleDisableClick : handleEnableClick)}
+                          disabled={hasKnowledgeGap}
                         >
                           {isAutoRespondEnabled ? 'Disable' : 'Enable'}
                         </Button>
@@ -1281,6 +1425,15 @@ export default function TicketGroupDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Create Knowledge Panel */}
+      {showCreateKnowledgePanel && (
+        <CreateKnowledgePanel
+          groupTitle={group.title}
+          onClose={() => setShowCreateKnowledgePanel(false)}
+          onCreateKnowledge={handleCreateKnowledge}
+        />
       )}
     </RitaLayout>
   )
