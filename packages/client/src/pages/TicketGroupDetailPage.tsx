@@ -338,9 +338,9 @@ export default function TicketGroupDetailPage() {
       description: 'See how Rita learned from your feedback and corrections',
       icon: <GraduationCap className="w-5 h-5 text-indigo-600" />,
       category: 'training' as const,
-      status: trainingData.total > 0 ? ('available' as const) : ('disabled' as const),
+      status: trainingResults.total > 0 ? ('available' as const) : ('disabled' as const),
       creditCost: 0,
-      badge: trainingData.total > 0 ? `${trainingData.total} sessions` : undefined,
+      badge: trainingResults.total > 0 ? `${trainingResults.total} sessions` : undefined,
       onAction: () => {
         setShowActionsPanel(false)
         // Future: Show training history
