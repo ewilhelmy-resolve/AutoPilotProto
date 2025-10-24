@@ -21,6 +21,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import AutoRespondPanel from '../components/tickets/AutoRespondPanel'
 import EnrichmentModal from '../components/tickets/EnrichmentModal'
 import CreateKnowledgePanel from '../components/tickets/CreateKnowledgePanel'
+import AutoResolveModal from '../components/tickets/AutoResolveModal'
 
 // Mock ticket data
 interface Ticket {
@@ -235,6 +236,9 @@ export default function TicketGroupDetailPage() {
   const [lastCreatedArticle, setLastCreatedArticle] = useState('')
   const hasKnowledgeGap = knowledgeCount === 0
 
+  // Auto-Resolve states
+  const [showAutoResolveModal, setShowAutoResolveModal] = useState(false)
+
   // Knowledge confetti celebration (book/star theme)
   const triggerKnowledgeCelebration = () => {
     const count = 200
@@ -311,6 +315,20 @@ export default function TicketGroupDetailPage() {
     triggerKnowledgeCelebration()
 
     // TODO: Send create knowledge action to backend via Rita Go → Actions → Rabbit pattern
+  }
+
+  // Handle Auto-Resolve upgrade click
+  const handleAutoResolveUpgrade = () => {
+    setShowAutoResolveModal(true)
+  }
+
+  // Handle Auto-Resolve validation
+  const handleAutoResolveValidate = () => {
+    console.log('🔧 Validating Auto-Resolve workflow')
+    // Close modal
+    setShowAutoResolveModal(false)
+    // TODO: In real implementation, this would trigger workflow validation
+    // TODO: Show success message or navigate to validation flow
   }
 
   // Update real-time metrics (chart, open tickets, automation %)
@@ -1175,7 +1193,12 @@ export default function TicketGroupDetailPage() {
                           <div className="text-xs text-muted-foreground">Pre-set workflow</div>
                         </div>
                         <Crown className="w-4 h-4 shrink-0 text-yellow-600" />
-                        <Button variant="ghost" size="sm" className="h-8 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 shrink-0"
+                          onClick={handleAutoResolveUpgrade}
+                        >
                           Upgrade
                         </Button>
                       </div>
@@ -1435,6 +1458,15 @@ export default function TicketGroupDetailPage() {
           onCreateKnowledge={handleCreateKnowledge}
         />
       )}
+
+      {/* Auto-Resolve Modal */}
+      <AutoResolveModal
+        isOpen={showAutoResolveModal}
+        onClose={() => setShowAutoResolveModal(false)}
+        onValidate={handleAutoResolveValidate}
+        groupTitle={group.title}
+        ticketCount={group.count}
+      />
     </RitaLayout>
   )
 }
