@@ -6,6 +6,7 @@
  */
 
 import { FeatureFlagsPanel } from '@/components/devtools/FeatureFlagsPanel'
+import { DemoControlsPanel } from '@/components/devtools/DemoControlsPanel'
 import RitaLayout from '@/components/layouts/RitaLayout'
 
 const DevToolsPage: React.FC = () => {
@@ -16,9 +17,12 @@ const DevToolsPage: React.FC = () => {
           <div>
             <h1 className="text-2xl font-semibold mb-2">Developer Tools</h1>
             <p className="text-sm text-muted-foreground">
-              Manage feature flags and developer settings
+              Manage feature flags, demo controls, and developer settings
             </p>
           </div>
+
+          {/* Demo Controls Panel */}
+          <DemoControlsPanel />
 
           {/* Feature Flags Panel */}
           <FeatureFlagsPanel />
