@@ -19,7 +19,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import AutoRespondPanel from '../components/tickets/AutoRespondPanel'
-import EnrichmentModal from '../components/tickets/EnrichmentModal'
+import AutoPopulatePanel from '../components/tickets/AutoPopulatePanel'
 import CreateKnowledgePanel from '../components/tickets/CreateKnowledgePanel'
 import AutoResolveModal from '../components/tickets/AutoResolveModal'
 
@@ -213,7 +213,7 @@ export default function TicketGroupDetailPage() {
   const [showDisableModal, setShowDisableModal] = useState(false)
 
   // Auto-populate states
-  const [showEnrichmentModal, setShowEnrichmentModal] = useState(false)
+  const [showAutoPopulatePanel, setShowAutoPopulatePanel] = useState(false)
   const [enrichmentContext, setEnrichmentContext] = useState<'group' | 'selected'>('group')
   const [isAutoPopulateEnabled, setIsAutoPopulateEnabled] = useState(false)
   const [enrichedTicketsCount, setEnrichedTicketsCount] = useState(0)
@@ -485,13 +485,13 @@ export default function TicketGroupDetailPage() {
   // Handle auto-populate for selected tickets
   const handleAutoPopulateSelected = () => {
     setEnrichmentContext('selected')
-    setShowEnrichmentModal(true)
+    setShowAutoPopulatePanel(true)
   }
 
   // Handle enable auto-populate for entire group
   const handleEnableAutoPopulate = () => {
     setEnrichmentContext('group')
-    setShowEnrichmentModal(true)
+    setShowAutoPopulatePanel(true)
   }
 
   // Handle applying pending updates
@@ -618,7 +618,7 @@ export default function TicketGroupDetailPage() {
     }
 
     // Close modal
-    setShowEnrichmentModal(false)
+    setShowAutoPopulatePanel(false)
 
     // Clear selection if enriching selected tickets
     if (enrichmentContext === 'selected') {
@@ -1335,10 +1335,10 @@ export default function TicketGroupDetailPage() {
         </div>
       )}
 
-      {/* Enrichment Modal for Auto-Populate */}
-      <EnrichmentModal
-        isOpen={showEnrichmentModal}
-        onClose={() => setShowEnrichmentModal(false)}
+      {/* Auto-Populate Panel */}
+      <AutoPopulatePanel
+        isOpen={showAutoPopulatePanel}
+        onClose={() => setShowAutoPopulatePanel(false)}
         onConfirm={handleConfirmEnrichment}
         ticketCount={enrichmentContext === 'group' ? openTicketsCount : selectedTickets.size}
         isGroupLevel={enrichmentContext === 'group'}
