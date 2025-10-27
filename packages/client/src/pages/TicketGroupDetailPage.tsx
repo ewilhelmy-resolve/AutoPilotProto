@@ -431,13 +431,25 @@ export default function TicketGroupDetailPage() {
     setShowAutoResolveModal(true)
   }
 
-  // Handle Auto-Resolve validation
-  const handleAutoResolveValidate = () => {
-    console.log('🔧 Validating Auto-Resolve workflow')
+  // Handle Auto-Resolve upgrade
+  const handleAutoResolveUpgradeComplete = (plan: 'pro' | 'enterprise') => {
+    console.log('💳 Auto-Resolve upgrade selected:', plan)
     // Close modal
     setShowAutoResolveModal(false)
-    // TODO: In real implementation, this would trigger workflow validation
-    // TODO: Show success message or navigate to validation flow
+
+    if (plan === 'pro') {
+      // TODO: In real implementation:
+      // 1. Process payment via Rita Go → Actions → Rabbit pattern
+      // 2. Update user subscription
+      // 3. Enable Auto-Resolve for this group
+      // 4. Show success message
+      console.log('✅ Pro plan selected - processing upgrade...')
+    } else if (plan === 'enterprise') {
+      // TODO: In real implementation:
+      // 1. Trigger contact sales flow
+      // 2. Maybe open a support chat or redirect to sales page
+      console.log('📞 Enterprise plan selected - contacting sales...')
+    }
   }
 
   // Update real-time metrics (chart, open tickets, automation %)
@@ -977,14 +989,14 @@ export default function TicketGroupDetailPage() {
               </div>
             </div>
 
-            {/* Actions Button */}
-            <Button
+            {/* Actions Button - Hidden for now */}
+            {/* <Button
               onClick={() => setShowActionsPanel(true)}
               className="gap-2 bg-primary hover:bg-primary/90"
             >
               <Zap className="w-4 h-4" />
               <span className="hidden sm:inline">Actions</span>
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -1581,7 +1593,7 @@ export default function TicketGroupDetailPage() {
       <AutoResolveModal
         isOpen={showAutoResolveModal}
         onClose={() => setShowAutoResolveModal(false)}
-        onValidate={handleAutoResolveValidate}
+        onUpgrade={handleAutoResolveUpgradeComplete}
         groupTitle={group.title}
         ticketCount={group.count}
       />
