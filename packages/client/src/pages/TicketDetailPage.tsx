@@ -6,10 +6,26 @@
  */
 
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import RitaLayout from '../components/layouts/RitaLayout'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import AutoPopulatePanel from '../components/tickets/AutoPopulatePanel'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 // Mock ticket data
 interface TicketDetail {
@@ -55,6 +71,10 @@ export default function TicketDetailPage() {
   const { groupId, ticketId } = useParams<{ groupId: string; ticketId: string }>()
   const navigate = useNavigate()
 
+  // Action states
+  const [showAutoRespondDialog, setShowAutoRespondDialog] = useState(false)
+  const [showAutoPopulatePanel, setShowAutoPopulatePanel] = useState(false)
+
   // Find the ticket
   const groupTickets = MOCK_TICKETS[groupId || '1'] || []
   const currentIndex = groupTickets.findIndex(t => t.id === ticketId)
@@ -74,6 +94,29 @@ export default function TicketDetailPage() {
     if (hasNext) {
       navigate(`/tickets/${groupId}/${groupTickets[currentIndex + 1].id}`)
     }
+  }
+
+  // Action handlers
+  const handleAutoRespond = () => {
+    console.log('🤖 Auto-Respond clicked for ticket:', ticket.id)
+    setShowAutoRespondDialog(true)
+  }
+
+  const handleConfirmAutoRespond = () => {
+    console.log('✅ Auto-Respond enabled for ticket:', ticket.id)
+    setShowAutoRespondDialog(false)
+    // TODO: Implement actual auto-respond logic
+  }
+
+  const handleAutoPopulate = () => {
+    console.log('🎨 Auto-Populate clicked for ticket:', ticket.id)
+    setShowAutoPopulatePanel(true)
+  }
+
+  const handleConfirmAutoPopulate = () => {
+    console.log('✅ Auto-Populate confirmed for ticket:', ticket.id)
+    setShowAutoPopulatePanel(false)
+    // TODO: Implement actual auto-populate logic
   }
 
   if (!ticket) {
@@ -133,10 +176,23 @@ export default function TicketDetailPage() {
               </div>
             </div>
 
-            {/* Right: Archive button */}
-            <Button onClick={() => {}}>
-              Archive
-            </Button>
+            {/* Right: Actions dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="gap-2">
+                  Actions
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleAutoRespond}>
+                  Auto-Respond
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleAutoPopulate}>
+                  Auto-Populate
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -148,7 +204,7 @@ export default function TicketDetailPage() {
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-medium text-foreground">{ticket.id}</span>
                 <Button variant="outline" size="sm">
-                  Duplicate
+                  Priority
                 </Button>
               </div>
 
@@ -192,6 +248,52 @@ export default function TicketDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Auto-Respond Confirmation Dialog */}
+      <AlertDialog open={showAutoRespondDialog} onOpenChange={setShowAutoRespondDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enable Auto-Respond for this ticket?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Rita will automatically draft a response for ticket <strong>{ticket.id}</strong> based on your knowledge base.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setShowAutoRespondDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmAutoRespond}>
+              Enable Auto-Respond
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Auto-Populate Panel */}
+      <AutoPopulatePanel
+        isOpen={showAutoPopulatePanel}
+        onClose={() => setShowAutoPopulatePanel(false)}
+        onConfirm={handleConfirmAutoPopulate}
+        ticketCount={1}
+        isGroupLevel={false}
+        predictions={[
+          {
+            type: 'Priority',
+            currentValue: '',
+            predictedValue: 'P2 - High',
+          },
+          {
+            type: 'Category',
+            currentValue: '',
+            predictedValue: 'Email / Signature',
+          },
+          {
+            type: 'Assignment Group',
+            currentValue: '',
+            predictedValue: 'IT Service Desk',
+          },
+        ]}
+      />
     </RitaLayout>
   )
 }
