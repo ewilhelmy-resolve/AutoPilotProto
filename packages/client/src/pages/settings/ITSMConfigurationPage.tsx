@@ -111,6 +111,8 @@ export default function ITSMConfigurationPage() {
   }
 
   const handleViewTickets = () => {
+    // Mark tickets as imported for demo flow
+    localStorage.setItem('demo:hasImportedTickets', 'true')
     navigate('/tickets')
   }
 

@@ -986,6 +986,16 @@ export default function TicketGroupDetailPage() {
                     Knowledge missing
                   </Badge>
                 )}
+                {isAutoRespondEnabled && (
+                  <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100">
+                    Auto-Respond On
+                  </Badge>
+                )}
+                {isAutoPopulateEnabled && (
+                  <Badge className="bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-100">
+                    Auto-Populate On
+                  </Badge>
+                )}
               </div>
             </div>
 

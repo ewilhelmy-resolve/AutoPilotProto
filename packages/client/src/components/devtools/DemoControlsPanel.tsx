@@ -17,6 +17,8 @@ import {
   Users,
   BarChart3,
   RefreshCw,
+  Upload,
+  BookPlus,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -37,7 +39,8 @@ export function DemoControlsPanel() {
     // Clear localStorage demo state
     localStorage.removeItem('hasSeenWelcome')
     localStorage.removeItem('demoState')
-    toast.success('Demo state reset - reload page to see welcome screen')
+    localStorage.removeItem('demo:hasImportedTickets')
+    toast.success('Demo state reset - reload page to see initial state')
   }
 
   const handleLoadScenario = (scenario: string) => {
@@ -146,6 +149,27 @@ export function DemoControlsPanel() {
             </div>
           </div>
 
+          {/* Auto-Populate */}
+          <div className="flex items-start gap-3 p-3 border rounded-lg">
+            <Zap className="h-5 w-5 text-teal-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm mb-1">Auto-Populate</div>
+              <p className="text-xs text-muted-foreground mb-2">
+                Automatically populate ticket fields using AI predictions
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  navigate('/tickets/1')
+                  toast.info('Click "Actions" dropdown and select "Auto-Populate"')
+                }}
+              >
+                Go to Demo
+              </Button>
+            </div>
+          </div>
+
           {/* Knowledge Gap Detection */}
           <div className="flex items-start gap-3 p-3 border rounded-lg">
             <Zap className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
@@ -183,6 +207,50 @@ export function DemoControlsPanel() {
                 onClick={() => {
                   navigate('/tickets/1')
                   toast.info('Click "Upgrade" button next to Auto-Resolve in sidebar')
+                }}
+              >
+                Go to Demo
+              </Button>
+            </div>
+          </div>
+
+          {/* Import Tickets */}
+          <div className="flex items-start gap-3 p-3 border rounded-lg">
+            <Upload className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm mb-1">Import Tickets</div>
+              <p className="text-xs text-muted-foreground mb-2">
+                Start with empty state, import tickets (all manual, no automation yet)
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  // Reset to empty state for demo
+                  localStorage.removeItem('demo:hasImportedTickets')
+                  navigate('/tickets')
+                  toast.info('Click "Setup ITSM Connections" to import tickets')
+                }}
+              >
+                Go to Demo
+              </Button>
+            </div>
+          </div>
+
+          {/* Create Knowledge */}
+          <div className="flex items-start gap-3 p-3 border rounded-lg">
+            <BookPlus className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm mb-1">Create Knowledge</div>
+              <p className="text-xs text-muted-foreground mb-2">
+                Demo creating knowledge base articles with AI assistance
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  navigate('/knowledge')
+                  toast.info('Navigate to knowledge base to create articles')
                 }}
               >
                 Go to Demo

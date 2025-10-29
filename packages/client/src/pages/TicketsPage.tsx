@@ -25,24 +25,30 @@ interface TicketGroup {
   knowledgeCount: number
 }
 
-const MOCK_TICKET_GROUPS: TicketGroup[] = [
-  { id: '1', title: 'Email Signatures', count: 976, automationPercent: 87, manualPercent: 13, knowledgeCount: 3 },
-  { id: '2', title: 'Password Resets', count: 743, automationPercent: 65, manualPercent: 21, knowledgeCount: 1 },
-  { id: '3', title: 'Network Connectivity', count: 564, automationPercent: 46, manualPercent: 7, knowledgeCount: 2 },
-  { id: '4', title: 'Application Crashes', count: 121, automationPercent: 54, manualPercent: 27, knowledgeCount: 1 },
+// Manual-only ticket groups (post-import, pre-automation)
+// Some tickets already resolved manually, varying percentages per cluster
+const MANUAL_TICKET_GROUPS: TicketGroup[] = [
+  { id: '1', title: 'Email Signatures', count: 976, automationPercent: 0, manualPercent: 87, knowledgeCount: 0 },
+  { id: '2', title: 'Password Resets', count: 743, automationPercent: 0, manualPercent: 65, knowledgeCount: 0 },
+  { id: '3', title: 'Network Connectivity', count: 564, automationPercent: 0, manualPercent: 46, knowledgeCount: 0 },
+  { id: '4', title: 'Application Crashes', count: 121, automationPercent: 0, manualPercent: 54, knowledgeCount: 0 },
   { id: '5', title: 'VPN Issues', count: 45, automationPercent: 0, manualPercent: 39, knowledgeCount: 0 },
   { id: '6', title: 'System Overload', count: 32, automationPercent: 0, manualPercent: 57, knowledgeCount: 0 },
-  { id: '7', title: 'Signatures Preferences', count: 21, automationPercent: 16, manualPercent: 57, knowledgeCount: 1 },
-  { id: '8', title: 'Performance Optimization', count: 11, automationPercent: 0, manualPercent: 12, knowledgeCount: 0 },
-  { id: '9', title: 'Connection Troubleshooting', count: 4, automationPercent: 62, manualPercent: 8, knowledgeCount: 1 },
+  { id: '7', title: 'Signatures Preferences', count: 21, automationPercent: 0, manualPercent: 72, knowledgeCount: 0 },
+  { id: '8', title: 'Performance Optimization', count: 11, automationPercent: 0, manualPercent: 28, knowledgeCount: 0 },
+  { id: '9', title: 'Connection Troubleshooting', count: 4, automationPercent: 0, manualPercent: 62, knowledgeCount: 0 },
 ]
 
 export default function TicketsPage() {
   const navigate = useNavigate()
-  const [hasTickets] = useState(true) // Set to false to show empty state
+  // Start with empty state for demo - tickets are imported via demo flow
+  const [hasTickets, setHasTickets] = useState(() => {
+    return localStorage.getItem('demo:hasImportedTickets') === 'true'
+  })
   const [timeRange, setTimeRange] = useState('90')
 
   const handleSetupConnections = () => {
+    // Navigate to settings to setup ITSM connections
     navigate('/settings/connections')
   }
 
@@ -182,7 +188,7 @@ export default function TicketsPage() {
 
               {/* Ticket Groups Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {MOCK_TICKET_GROUPS.map((group) => {
+                {MANUAL_TICKET_GROUPS.map((group) => {
                   const hasContent = group.knowledgeCount > 0
                   const isAutomated = hasContent && group.automationPercent > 0
 
