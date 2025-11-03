@@ -1017,23 +1017,23 @@ export default function TicketGroupDetailPage() {
             <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full">
               {/* Ticket Trends */}
               <Card className="p-4 sm:p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <h2 className="text-base sm:text-lg font-semibold">Ticket Trends</h2>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-base font-semibold">Ticket Trends</h2>
                   <Info className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
+                <p className="text-xs text-muted-foreground mb-3">
                   Rita learned from {group.count} tickets, automatically handled {automationPercentage}%
                 </p>
 
                 {/* Chart */}
-                <ChartContainer config={chartConfig} className="h-48 sm:h-64">
-                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <ChartContainer config={chartConfig} className="h-32">
+                  <LineChart data={chartData} margin={{ top: 0, right: 5, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" vertical={false} />
                     <XAxis
                       dataKey="month"
                       tickLine={false}
                       axisLine={false}
-                      tick={{ fill: '#737373', fontSize: 12 }}
+                      tick={{ fill: '#737373', fontSize: 11 }}
                     />
                     <YAxis hide />
                     <ChartTooltip content={<ChartTooltipContent />} />
@@ -1054,13 +1054,13 @@ export default function TicketGroupDetailPage() {
                   </LineChart>
                 </ChartContainer>
 
-                <div className="flex items-center justify-center gap-4 mt-4 text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#07EFD4' }} />
+                <div className="flex items-center justify-center gap-3 mt-2 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#07EFD4' }} />
                     <span>Manual</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#9747FF' }} />
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#9747FF' }} />
                     <span>Automated</span>
                   </div>
                 </div>

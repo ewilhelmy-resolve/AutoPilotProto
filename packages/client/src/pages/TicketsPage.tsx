@@ -28,15 +28,15 @@ interface TicketGroup {
 // Manual-only ticket groups (post-import, pre-automation)
 // Some tickets already resolved manually, varying percentages per cluster
 const MANUAL_TICKET_GROUPS: TicketGroup[] = [
-  { id: '1', title: 'Email Signatures', count: 976, automationPercent: 0, manualPercent: 87, knowledgeCount: 0 },
-  { id: '2', title: 'Password Resets', count: 743, automationPercent: 0, manualPercent: 65, knowledgeCount: 0 },
-  { id: '3', title: 'Network Connectivity', count: 564, automationPercent: 0, manualPercent: 46, knowledgeCount: 0 },
-  { id: '4', title: 'Application Crashes', count: 121, automationPercent: 0, manualPercent: 54, knowledgeCount: 0 },
+  { id: '1', title: 'Email Signatures', count: 976, automationPercent: 0, manualPercent: 87, knowledgeCount: 3 },
+  { id: '2', title: 'Password Resets', count: 743, automationPercent: 0, manualPercent: 65, knowledgeCount: 1 },
+  { id: '3', title: 'Network Connectivity', count: 564, automationPercent: 0, manualPercent: 46, knowledgeCount: 2 },
+  { id: '4', title: 'Application Crashes', count: 121, automationPercent: 0, manualPercent: 54, knowledgeCount: 1 },
   { id: '5', title: 'VPN Issues', count: 45, automationPercent: 0, manualPercent: 39, knowledgeCount: 0 },
   { id: '6', title: 'System Overload', count: 32, automationPercent: 0, manualPercent: 57, knowledgeCount: 0 },
-  { id: '7', title: 'Signatures Preferences', count: 21, automationPercent: 0, manualPercent: 72, knowledgeCount: 0 },
+  { id: '7', title: 'Signatures Preferences', count: 21, automationPercent: 0, manualPercent: 72, knowledgeCount: 1 },
   { id: '8', title: 'Performance Optimization', count: 11, automationPercent: 0, manualPercent: 28, knowledgeCount: 0 },
-  { id: '9', title: 'Connection Troubleshooting', count: 4, automationPercent: 0, manualPercent: 62, knowledgeCount: 0 },
+  { id: '9', title: 'Connection Troubleshooting', count: 4, automationPercent: 0, manualPercent: 62, knowledgeCount: 1 },
 ]
 
 export default function TicketsPage() {
@@ -199,64 +199,64 @@ export default function TicketsPage() {
                       onClick={() => navigate(`/tickets/${group.id}`)}
                     >
                       <div className="flex flex-col gap-3">
-                        {/* Header - Title and Status Badge */}
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-base font-medium flex-1">{group.title}</h3>
-                          {isAutomated ? (
-                            <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100 shrink-0">
-                              Automated
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-300 shrink-0">
-                              Manual
-                            </Badge>
+                        {/* Title */}
+                        <h3 className="text-sm font-medium">{group.title}</h3>
+
+                        {/* Count */}
+                        <div className="text-[38px] font-serif leading-tight">{group.count}</div>
+
+                        {/* Progress Bar */}
+                        <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden flex">
+                          {/* Manual section (purple) */}
+                          {group.manualPercent > 0 && (
+                            <div
+                              className="h-full transition-all"
+                              style={{
+                                width: `${group.manualPercent}%`,
+                                backgroundColor: '#9747FF'
+                              }}
+                            />
+                          )}
+                          {/* Automated section (cyan) */}
+                          {group.automationPercent > 0 && (
+                            <div
+                              className="h-full transition-all"
+                              style={{
+                                width: `${group.automationPercent}%`,
+                                backgroundColor: '#07EFD4'
+                              }}
+                            />
                           )}
                         </div>
 
-                        {/* Count and Content Badge */}
-                        <div className="flex flex-col gap-1">
-                          <span className="text-4xl font-bold">{group.count}</span>
-                          <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-300 w-fit text-xs">
-                            {hasContent ? 'Content found' : 'No content'}
-                          </Badge>
+                        {/* Legend */}
+                        <div className="flex items-center gap-3 text-xs">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#9747FF' }} />
+                            <span className="text-muted-foreground">Manual {group.manualPercent}%</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#07EFD4' }} />
+                            <span className="text-muted-foreground">Automated {group.automationPercent}%</span>
+                          </div>
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="flex flex-col gap-2">
-                          <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden flex">
-                            {/* Automated section (cyan) */}
-                            {group.automationPercent > 0 && (
-                              <div
-                                className="h-full transition-all"
-                                style={{
-                                  width: `${group.automationPercent}%`,
-                                  backgroundColor: '#07EFD4'
-                                }}
-                              />
-                            )}
-                            {/* Manual section (purple) */}
-                            {group.manualPercent > 0 && (
-                              <div
-                                className="h-full transition-all"
-                                style={{
-                                  width: `${group.manualPercent}%`,
-                                  backgroundColor: '#9747FF'
-                                }}
-                              />
-                            )}
-                          </div>
-
-                          {/* Legend */}
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#07EFD4' }} />
-                              <span className="text-muted-foreground">Automated {group.automationPercent}%</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#9747FF' }} />
-                              <span className="text-muted-foreground">Manual {group.manualPercent}%</span>
-                            </div>
-                          </div>
+                        {/* Badges */}
+                        <div className="flex items-center gap-2">
+                          {hasContent ? (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-300 text-xs">
+                              Knowledge found
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 text-xs">
+                              Knowledge gap
+                            </Badge>
+                          )}
+                          {isAutomated && (
+                            <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100 text-xs">
+                              Automated
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </Card>
