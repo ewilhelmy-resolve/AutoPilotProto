@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { X, ThumbsDown, ThumbsUp, FileText, Pencil } from 'lucide-react'
+import { X, ThumbsDown, ThumbsUp, FileText, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -172,48 +172,51 @@ export default function AutoRespondPanel({
 
         {/* Panel */}
         <div className="relative w-full max-w-2xl bg-background shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-          {/* Header */}
-          <div className="px-6 py-4 border-b flex-shrink-0">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold mb-1">Training Complete!</h2>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="h-8 w-8 -mt-1"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+          {/* Header - Just close button */}
+          <div className="px-6 py-4 flex-shrink-0 flex justify-end">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Summary Content */}
           <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center justify-center">
-            <div className="max-w-md w-full text-center space-y-6">
-              {/* Celebration Icon */}
-              <div className="text-6xl">🎉</div>
+            <div className="max-w-md w-full text-center space-y-8">
+              {/* Main Heading */}
+              <h3 className="text-2xl font-semibold">You reviewed {trainingResults.total} tickets</h3>
 
-              {/* Summary Stats */}
-              <div className="space-y-2">
-                <h3 className="text-2xl font-semibold">You reviewed {trainingResults.total} tickets</h3>
-                <div className="flex items-center justify-center gap-6 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">✅</span>
-                    <span><strong>{trainingResults.trusted}</strong> trusted responses</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">⚠️</span>
-                    <span><strong>{trainingResults.taught}</strong> needed improvement</span>
-                  </div>
+              {/* Confidence Improvement with Emojis */}
+              <div className="relative py-8">
+                <div className="space-y-2">
+                  <p className="text-base text-muted-foreground">Confidence improved by</p>
+                  <p className="text-6xl font-semibold">{confidenceImprovement}%</p>
+                </div>
+                {/* Emoji confetti decoration */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="text-2xl absolute top-0 left-1/4">🎉</div>
+                  <div className="text-xl absolute top-4 right-1/4">✨</div>
+                  <div className="text-lg absolute bottom-4 left-1/3">🎊</div>
+                  <div className="text-xl absolute bottom-0 right-1/3">🌟</div>
                 </div>
               </div>
 
-              {/* Confidence Improvement */}
-              <div className="bg-muted/50 rounded-lg p-4">
-                <p className="text-sm text-muted-foreground mb-1">Rita's confidence improved</p>
-                <p className="text-3xl font-bold text-green-600">+{confidenceImprovement}%</p>
+              {/* Summary Stats */}
+              <div className="flex items-center justify-center gap-8 text-sm">
+                <div className="flex items-center gap-2">
+                  <ThumbsDown className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Need improvement</span>
+                  <span className="font-semibold">{trainingResults.taught}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ThumbsUp className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Trusted</span>
+                  <span className="font-semibold">{trainingResults.trusted}</span>
+                </div>
               </div>
 
               {/* Call to Action */}
@@ -231,7 +234,7 @@ export default function AutoRespondPanel({
                 onClick={onClose}
                 className="flex-1"
               >
-                Train More
+                Keep reviewing
               </Button>
               <Button
                 onClick={() => {
@@ -265,7 +268,7 @@ export default function AutoRespondPanel({
         <div className="px-6 py-4 border-b flex-shrink-0">
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
-              <h2 className="text-xl font-semibold mb-1">Auto Respond</h2>
+              <h2 className="text-xl font-semibold mb-1">Review AI response</h2>
               <p className="text-sm text-muted-foreground">
                 Rita analyzed your KB and similar tickets to draft this response.
               </p>
@@ -296,12 +299,12 @@ export default function AutoRespondPanel({
           <div className="space-y-6">
             {/* Ticket Details */}
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">Ticket Details</h3>
-              <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+              <h3 className="text-sm font-medium mb-3">Ticket Details</h3>
+              <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-mono text-sm font-medium mb-2">{currentTicket.id}</div>
-                    <h4 className="text-base font-medium mb-2">{currentTicket.title}</h4>
+                    <div className="font-semibold text-base mb-1">{currentTicket.id}</div>
+                    <h4 className="text-base">{currentTicket.title}</h4>
                   </div>
                   <Badge className={`text-xs border shrink-0 ${getPriorityColor(currentTicket.priority)}`}>
                     {getPriorityLabel(currentTicket.priority)}
@@ -309,7 +312,7 @@ export default function AutoRespondPanel({
                 </div>
 
                 <div>
-                  <div className="text-xs text-muted-foreground mb-1">Description</div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Description</div>
                   <p className="text-sm">{currentTicket.description}</p>
                 </div>
               </div>
@@ -317,40 +320,42 @@ export default function AutoRespondPanel({
 
             {/* AI Response */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-muted-foreground">AI-Response</h3>
-                <Badge variant="outline" className="text-xs gap-1">
-                  <Pencil className="w-3 h-3" />
-                  Editable
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-medium">AI-Response</h3>
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100 gap-1 text-xs">
+                  <Sparkles className="w-3 h-3" />
+                  Auto-Respond
                 </Badge>
               </div>
 
-              <Textarea
-                value={editedResponse}
-                onChange={(e) => setEditedResponse(e.target.value)}
-                className="min-h-[300px] font-mono text-sm resize-none"
-                placeholder="AI-generated response will appear here..."
-              />
-            </div>
+              <div className="border rounded-lg p-4 bg-muted/30">
+                <Textarea
+                  value={editedResponse}
+                  onChange={(e) => setEditedResponse(e.target.value)}
+                  className="min-h-[300px] text-sm resize-none bg-transparent border-0 p-0 focus-visible:ring-0"
+                  placeholder="AI-generated response will appear here..."
+                />
 
-            {/* KB Articles */}
-            {currentTicket.kbArticles && currentTicket.kbArticles.length > 0 && (
-              <div className="space-y-2">
-                {currentTicket.kbArticles.map((article) => (
-                  <div
-                    key={article.id}
-                    className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                  >
-                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="flex-1 text-sm">{article.title}</span>
-                    <Badge className="text-xs shrink-0">+{(currentTicket.kbArticles?.length ?? 0) - 1 + article.confidence}</Badge>
-                    <Badge className={`text-xs shrink-0 ${getConfidenceBadgeColor(article.confidence)}`}>
-                      {article.confidence}% {article.confidenceLabel}
-                    </Badge>
+                {/* KB Articles */}
+                {currentTicket.kbArticles && currentTicket.kbArticles.length > 0 && (
+                  <div className="mt-4 pt-4 border-t space-y-2">
+                    {currentTicket.kbArticles.map((article) => (
+                      <div
+                        key={article.id}
+                        className="flex items-center gap-3 hover:bg-muted/50 transition-colors cursor-pointer rounded p-2 -mx-2"
+                      >
+                        <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span className="flex-1 text-sm font-medium">{article.id} - {article.title}</span>
+                        <Badge className="text-xs shrink-0 bg-gray-200 text-gray-700 border-0">+{(currentTicket.kbArticles?.length ?? 0) + 3}</Badge>
+                        <Badge className={`text-xs shrink-0 ${getConfidenceBadgeColor(article.confidence)}`}>
+                          {article.confidence}% {article.confidenceLabel}
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -412,18 +417,18 @@ export default function AutoRespondPanel({
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 onClick={handleTeachClick}
-                className="gap-2"
+                className="gap-2 flex-1"
               >
                 <ThumbsDown className="w-4 h-4" />
                 Teach the Bot
               </Button>
               <ConfettiButton
                 onClick={handleTrust}
-                className="gap-2"
+                className="gap-2 flex-1"
                 options={{
                   particleCount: 30,
                   spread: 60,

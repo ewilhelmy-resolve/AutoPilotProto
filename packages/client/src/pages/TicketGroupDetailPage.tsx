@@ -6,7 +6,7 @@
 
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Info, Sparkles, Zap, GitBranch, ChevronDown, Crown, X, Wand2, TrendingUp, Download, GraduationCap, MessageSquare, FileText } from 'lucide-react'
+import { Info, Sparkles, Zap, GitBranch, ChevronDown, Crown, X, Wand2, TrendingUp, Download, GraduationCap, MessageSquare, FileText, LayoutList, LayoutGrid, MoreHorizontal, Workflow } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import RitaLayout from '../components/layouts/RitaLayout'
 import { Button } from '@/components/ui/button'
@@ -192,7 +192,10 @@ export default function TicketGroupDetailPage() {
   const tickets = groupId ? TICKETS_BY_GROUP[groupId] || [] : []
 
   const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set())
-  const [sortBy, setSortBy] = useState('newest')
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table')
+  const [statusFilter, setStatusFilter] = useState<'needs-response' | 'completed'>('needs-response')
+  const [sourceFilter, setSourceFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [showAutoRespondPanel, setShowAutoRespondPanel] = useState(false)
   const [autoRespondIndex, setAutoRespondIndex] = useState(0)
   const [trainingResults, setTrainingResults] = useState<{
@@ -256,7 +259,7 @@ export default function TicketGroupDetailPage() {
       creditCost: 0,
       onAction: () => {
         setShowActionsPanel(false)
-        handleTrainRita()
+        // Auto-Respond training will be handled by selecting tickets and using the Auto-Respond panel
       },
     },
     {
@@ -959,17 +962,6 @@ export default function TicketGroupDetailPage() {
 
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 sm:py-6 border-b flex-shrink-0">
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mb-2">
-            <button
-              onClick={() => navigate('/tickets')}
-              className="hover:text-foreground flex items-center gap-1"
-            >
-              Tickets
-            </button>
-            <span>›</span>
-            <span className="text-foreground">{group.title}</span>
-          </div>
-
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
@@ -998,15 +990,6 @@ export default function TicketGroupDetailPage() {
                 )}
               </div>
             </div>
-
-            {/* Actions Button - Hidden for now */}
-            {/* <Button
-              onClick={() => setShowActionsPanel(true)}
-              className="gap-2 bg-primary hover:bg-primary/90"
-            >
-              <Zap className="w-4 h-4" />
-              <span className="hidden sm:inline">Actions</span>
-            </Button> */}
           </div>
         </div>
 
@@ -1068,6 +1051,80 @@ export default function TicketGroupDetailPage() {
 
               {/* Ticket List */}
               <div className="flex flex-col gap-4">
+                {/* Tabs and Filters Section */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b">
+                  {/* Status Tabs */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setStatusFilter('needs-response')}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        statusFilter === 'needs-response'
+                          ? 'bg-background text-foreground shadow-sm border'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Needs Response
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('completed')}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        statusFilter === 'completed'
+                          ? 'bg-background text-foreground shadow-sm border'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Completed
+                    </button>
+                  </div>
+
+                  {/* Filters, Search, View Toggle, and Sort */}
+                  <div className="flex items-center gap-2">
+                    {/* Source Filter */}
+                    <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Source: All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Source: All</SelectItem>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="portal">Portal</SelectItem>
+                        <SelectItem value="phone">Phone</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Search */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search tickets....."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full sm:w-[240px] px-3 py-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+
+                    {/* View Toggle */}
+                    <div className="flex items-center border rounded-lg p-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-7 px-2 ${viewMode === 'table' ? 'bg-muted' : ''}`}
+                        onClick={() => setViewMode('table')}
+                      >
+                        <LayoutList className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`h-7 px-2 ${viewMode === 'card' ? 'bg-muted' : ''}`}
+                        onClick={() => setViewMode('card')}
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Selection Toolbar */}
                 {selectedTickets.size > 0 && (
                   <div className="flex items-center gap-3 px-3 py-2 bg-muted/50 rounded-lg border">
@@ -1106,25 +1163,6 @@ export default function TicketGroupDetailPage() {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-medium">
-                      {openTicketsCount} Open
-                    </span>
-                  </div>
-
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-[140px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="newest">Newest</SelectItem>
-                      <SelectItem value="oldest">Oldest</SelectItem>
-                      <SelectItem value="priority">Priority</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Tickets */}
                 {isAutoRespondEnabled ? (
                   <Card className="p-6 sm:p-8 text-center">
@@ -1141,7 +1179,93 @@ export default function TicketGroupDetailPage() {
                       </div>
                     </div>
                   </Card>
+                ) : viewMode === 'table' ? (
+                  /* Table View */
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-muted/50 border-b">
+                        <tr>
+                          <th className="w-12 px-4 py-3">
+                            <Checkbox
+                              checked={selectedTickets.size === tickets.length && tickets.length > 0}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedTickets(new Set(tickets.map(t => t.id)))
+                                } else {
+                                  setSelectedTickets(new Set())
+                                }
+                              }}
+                            />
+                          </th>
+                          <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Name</th>
+                          <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Status</th>
+                          <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground hidden sm:table-cell">Source</th>
+                          <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground hidden lg:table-cell">Created Modified</th>
+                          <th className="w-12 px-4 py-3"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {tickets.map((ticket, index) => (
+                          <tr
+                            key={`${ticket.id}-${index}`}
+                            className="hover:bg-accent/50 transition-colors"
+                          >
+                            <td className="px-4 py-3">
+                              <Checkbox
+                                checked={selectedTickets.has(ticket.id)}
+                                onCheckedChange={() => toggleTicketSelection(ticket.id)}
+                              />
+                            </td>
+                            <td
+                              className="px-4 py-3 cursor-pointer"
+                              onClick={() => navigate(`/tickets/${groupId}/${ticket.id}`)}
+                            >
+                              <div className="flex flex-col gap-1">
+                                <span className="font-medium text-sm text-blue-600 hover:underline">
+                                  {ticket.id}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  {ticket.title}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge className="text-xs bg-background border-gray-300 text-foreground font-medium">
+                                Needs response
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 hidden sm:table-cell">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-green-500" />
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-muted-foreground hidden lg:table-cell">
+                              03 Sep, 2025 18:07
+                            </td>
+                            <td className="px-4 py-3">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => navigate(`/tickets/${groupId}/${ticket.id}`)}>
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => toggleTicketSelection(ticket.id)}>
+                                    {selectedTickets.has(ticket.id) ? 'Deselect' : 'Select'}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
+                  /* Card View */
                   <div className="flex flex-col gap-2">
                     {tickets.map((ticket, index) => (
                       <Card
@@ -1237,6 +1361,85 @@ export default function TicketGroupDetailPage() {
                     </div>
                   </div>
 
+                  {/* AutoPilot Recommendations */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-start gap-2">
+                      <Wand2 className="w-5 h-5 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold">AutoPilot Recommendations</h3>
+                        <p className="text-sm text-muted-foreground">Automate stages of a ticket resolution</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      {/* Auto-Respond Card */}
+                      <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Sparkles className="w-5 h-5 shrink-0" style={{ color: '#a855f7' }} />
+                            <span className="text-base font-medium">Auto-Respond</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-9 px-4"
+                            onClick={hasKnowledgeGap ? () => setShowCreateKnowledgePanel(true) : (isAutoRespondEnabled ? handleDisableClick : handleEnableClick)}
+                            disabled={hasKnowledgeGap}
+                          >
+                            {isAutoRespondEnabled ? 'Disable' : 'Enable'}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Auto-Populate Card */}
+                      <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Zap className="w-5 h-5 shrink-0" style={{ color: '#14b8a6' }} />
+                            <span className="text-base font-medium">Auto-Populate</span>
+                          </div>
+                          {isAutoPopulateEnabled && pendingUpdates ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-9 px-4 gap-1"
+                              onClick={() => setShowReviewUpdatesModal(true)}
+                            >
+                              Enabled
+                              <span className="bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 font-semibold">
+                                {pendingUpdates.count}
+                              </span>
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-9 px-4"
+                              onClick={handleEnableAutoPopulate}
+                              disabled={isAutoPopulateEnabled && !pendingUpdates}
+                            >
+                              {isAutoPopulateEnabled ? 'Enabled' : 'Enable'}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Auto-Resolve Card */}
+                      <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Workflow className="w-5 h-5 shrink-0" style={{ color: '#0050c7' }} />
+                            <span className="text-base font-medium">Auto-Resolve</span>
+                          </div>
+                          <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-50 gap-1">
+                            <Crown className="w-3 h-3" />
+                            coming soon
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Knowledge Gap Detection Alert */}
                   {hasKnowledgeGap && (
                     <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
@@ -1248,7 +1451,7 @@ export default function TicketGroupDetailPage() {
                               Knowledge Gap Detected
                             </h4>
                             <p className="text-sm text-muted-foreground">
-                              No knowledge articles found for this cluster.Rita recommends creating one to enable Auto-Answer.
+                              No knowledge articles found for this cluster. Rita recommends creating one to enable Auto-Answer.
                             </p>
                           </div>
                         </div>
@@ -1262,88 +1465,6 @@ export default function TicketGroupDetailPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* Group actions */}
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2 px-1.5 py-2">
-                      <span className="text-sm font-semibold">Group actions</span>
-                      <ChevronDown className="w-4 h-4 opacity-50" />
-                    </div>
-
-                    <div className="flex flex-col gap-3">
-                      {/* Auto-Respond */}
-                      <div className="flex items-center gap-3 py-2">
-                        <Sparkles className="w-4 h-4 shrink-0" style={{ color: '#a855f7' }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium">Auto-Respond</div>
-                          <div className="text-xs text-muted-foreground">
-                            {hasKnowledgeGap ? 'Needs knowledge' : '16 tickets ready'}
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 shrink-0"
-                          onClick={hasKnowledgeGap ? () => setShowCreateKnowledgePanel(true) : (isAutoRespondEnabled ? handleDisableClick : handleEnableClick)}
-                          disabled={hasKnowledgeGap}
-                        >
-                          {isAutoRespondEnabled ? 'Disable' : 'Enable'}
-                        </Button>
-                      </div>
-
-                      {/* Auto-Populate */}
-                      <div className="flex items-center gap-3 py-2">
-                        <Zap className="w-4 h-4 shrink-0" style={{ color: '#14b8a6' }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium">Auto-Populate</div>
-                          <div className="text-xs text-muted-foreground">
-                            {isAutoPopulateEnabled ? `${enrichedTicketsCount} enriched` : 'Ticket enrichment'}
-                          </div>
-                        </div>
-                        {isAutoPopulateEnabled && pendingUpdates ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 shrink-0 gap-1"
-                            onClick={() => setShowReviewUpdatesModal(true)}
-                          >
-                            Enabled
-                            <span className="bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 font-semibold">
-                              {pendingUpdates.count}
-                            </span>
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 shrink-0"
-                            onClick={handleEnableAutoPopulate}
-                            disabled={isAutoPopulateEnabled && !pendingUpdates}
-                          >
-                            {isAutoPopulateEnabled ? 'Enabled' : 'Enable'}
-                          </Button>
-                        )}
-                      </div>
-
-                      {/* Auto-Resolve */}
-                      <div className="flex items-center gap-3 py-2">
-                        <GitBranch className="w-4 h-4 shrink-0" style={{ color: '#0050c7' }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium">Auto-Resolve</div>
-                          <div className="text-xs text-muted-foreground">Pre-set workflow</div>
-                        </div>
-                        <Crown className="w-4 h-4 shrink-0 text-yellow-600" />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 shrink-0"
-                          onClick={handleAutoResolveUpgrade}
-                        >
-                          Upgrade
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
                 </TabsContent>
 
                 <TabsContent value="knowledge" className="mt-4">
