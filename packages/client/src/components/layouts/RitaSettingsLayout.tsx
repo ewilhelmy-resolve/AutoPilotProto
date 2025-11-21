@@ -10,7 +10,6 @@ import {
 	SidebarGroup,
 	SidebarGroupLabel,
 	SidebarHeader,
-	SidebarInset,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
@@ -48,7 +47,7 @@ export default function RitaSettingsLayout({
 
 	return (
 		<SidebarProvider defaultOpen={true}>
-			<Sidebar collapsible="none" className="w-64 max-w-64">
+			<Sidebar>
 				<SidebarHeader className="p-2">
 					<SidebarMenu>
 						<SidebarMenuItem>
@@ -64,7 +63,6 @@ export default function RitaSettingsLayout({
 				</SidebarHeader>
 
 				<SidebarContent>
-					{/* Profile */}
 					<SidebarGroup className="p-2">
 						<SidebarMenu>
 							<SidebarMenuItem>
@@ -81,88 +79,82 @@ export default function RitaSettingsLayout({
 						</SidebarMenu>
 					</SidebarGroup>
 
-					{/* Admin Section */}
 					{isOwnerOrAdmin() && (
-						<SidebarGroup className="p-2">
-							<SidebarGroupLabel className="px-2 h-8 text-xs text-muted-foreground">
-								Admin
-							</SidebarGroupLabel>
+					 
+						 
+							<SidebarGroup className="p-2">
+								<SidebarGroupLabel className="px-2 h-8 text-xs opacity-70">
+									Admin
+								</SidebarGroupLabel>
 
-							<SidebarMenu>
-								{/* Users */}
-								<SidebarMenuItem>
-									<SidebarMenuButton
-										className={cn(
-											"p-2 h-8 rounded-md cursor-pointer",
-											isUsersActive && "bg-accent text-accent-foreground",
+								<SidebarMenu>
+									{/* Connection Sources (Collapsible) */}
+									<SidebarMenuItem>
+										<SidebarMenuButton
+											className="p-2 h-8 rounded-md cursor-pointer flex items-center gap-2"
+											onClick={() => setConnectionSourcesOpen(!connectionSourcesOpen)}
+										>
+											<ChevronRight
+												className={cn(
+													"h-4 w-4 transition-transform",
+													connectionSourcesOpen && "rotate-90",
+												)}
+											/>
+											<span className="text-sm">Connection Sources</span>
+										</SidebarMenuButton>
+
+										{connectionSourcesOpen && (
+											<SidebarMenuSub>
+												<SidebarMenuSubItem>
+													<SidebarMenuSubButton
+														className={cn(
+															"px-2 h-7 rounded-md cursor-pointer",
+															isKnowledgeSourcesActive &&
+																"bg-accent text-accent-foreground",
+														)}
+														onClick={() => navigate("/settings/connections")}
+													>
+														<span className="text-sm">Knowledge Sources</span>
+													</SidebarMenuSubButton>
+												</SidebarMenuSubItem>
+												<SidebarMenuSubItem>
+													<SidebarMenuSubButton
+														className={cn(
+															"px-2 h-7 rounded-md cursor-pointer",
+															isItsmSourcesActive &&
+																"bg-accent text-accent-foreground",
+														)}
+														onClick={() => navigate("/settings/itsm")}
+													>
+														<span className="text-sm">ITSM Sources</span>
+													</SidebarMenuSubButton>
+												</SidebarMenuSubItem>
+											</SidebarMenuSub>
 										)}
-										onClick={() => navigate("/settings/users")}
-									>
-										<span className="text-sm">Users</span>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-
-								{/* Connection Sources (Collapsible) */}
-								<SidebarMenuItem>
-									<SidebarMenuButton
-										className="p-2 h-8 rounded-md cursor-pointer flex items-center gap-2"
-										onClick={() => setConnectionSourcesOpen(!connectionSourcesOpen)}
-									>
-										<ChevronRight
+									</SidebarMenuItem>
+									<SidebarMenuItem>
+										<SidebarMenuButton
 											className={cn(
-												"h-4 w-4 transition-transform",
-												connectionSourcesOpen && "rotate-90"
+												"p-2 h-8 rounded-md cursor-pointer",
+												isUsersActive && "bg-accent text-accent-foreground",
 											)}
-										/>
-										<span className="text-sm flex-1">Connection Sources</span>
-									</SidebarMenuButton>
-
-									{connectionSourcesOpen && (
-										<SidebarMenuSub>
-											<SidebarMenuSubItem>
-												<SidebarMenuSubButton
-													className={cn(
-														"h-7 px-2 rounded-md cursor-pointer",
-														isKnowledgeSourcesActive && !isItsmSourcesActive && "bg-accent text-accent-foreground",
-													)}
-													onClick={() => navigate("/settings/connections")}
-												>
-													<span className="text-sm">Knowledge Sources</span>
-												</SidebarMenuSubButton>
-											</SidebarMenuSubItem>
-											<SidebarMenuSubItem>
-												<SidebarMenuSubButton
-													className={cn(
-														"h-7 px-2 rounded-md cursor-pointer",
-														isItsmSourcesActive && "bg-accent text-accent-foreground",
-													)}
-													onClick={() => navigate("/settings/itsm")}
-												>
-													<span className="text-sm">ITSM Sources</span>
-												</SidebarMenuSubButton>
-											</SidebarMenuSubItem>
-										</SidebarMenuSub>
-									)}
-								</SidebarMenuItem>
-
-								{/* Plan & Billing */}
-								<SidebarMenuItem>
-									<SidebarMenuButton
-										className="p-2 h-8 rounded-md cursor-pointer"
-										onClick={() => navigate("/settings/billing")}
-									>
-										<span className="text-sm">Plan & Billing</span>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							</SidebarMenu>
-						</SidebarGroup>
+											onClick={() => navigate("/settings/users")}
+										>
+											<span className="text-sm">Users</span>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								</SidebarMenu>
+							</SidebarGroup>
+					 
 					)}
 				</SidebarContent>
+				<div className="p-2 border-t border-sidebar-border invisible w-[256px]" />
 			</Sidebar>
-
-			<SidebarInset className="flex flex-col w-full">
-				<main className="w-full p-6">{children}</main>
-			</SidebarInset>
+		 
+			<main className="w-full md:ml-[calc(var(--sidebar-width)+2em)]">
+				 {children}
+			</main>
+ 
 		</SidebarProvider>
 	);
 }
