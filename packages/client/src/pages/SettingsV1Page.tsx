@@ -6,12 +6,12 @@
  */
 
 import RitaSettingsLayout from '../components/layouts/RitaSettingsLayout'
-import ITSMSourcesPage from './settings/ITSMSourcesPage'
+import ConnectionSources from './settings/ConnectionSources'
 
 const SettingsV1Page: React.FC = () => {
   return (
     <RitaSettingsLayout>
-      <ITSMSourcesPage />
+      <ConnectionSources />
     </RitaSettingsLayout>
   )
 }

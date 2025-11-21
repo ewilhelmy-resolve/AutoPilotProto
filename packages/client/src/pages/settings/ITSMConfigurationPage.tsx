@@ -5,8 +5,8 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { RefreshCw, Check } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { RefreshCw, Check, Share2, UserCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,7 +15,9 @@ import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Header from '@/components/Header'
 import RitaSettingsLayout from '@/components/layouts/RitaSettingsLayout'
+import DelegateConfigModal from '@/components/modals/ShareConfigModal'
 import { toast } from '@/lib/toast'
+import { useAuth } from '@/hooks/useAuth'
 
 // Mock ITSM source metadata
 const ITSM_SOURCES: Record<string, { name: string; icon: string }> = {
@@ -29,8 +31,23 @@ type ConnectionState = 'configure' | 'connected' | 'importing' | 'imported'
 export default function ITSMConfigurationPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const { authenticated, loading } = useAuth()
 
   const source = id ? ITSM_SOURCES[id] : null
+  const delegateToken = searchParams.get('token')
+  const isDelegateAccess = !!delegateToken
+
+  // Redirect to sign-up if accessing via delegate link without authentication
+  useEffect(() => {
+    console.log('Auth check:', { isDelegateAccess, loading, authenticated })
+    if (isDelegateAccess && !loading && !authenticated) {
+      console.log('Redirecting to signup...')
+      // Preserve the current URL to return after sign-up
+      const returnUrl = `/config/${id}?token=${delegateToken}`
+      navigate(`/signup?returnTo=${encodeURIComponent(returnUrl)}`, { replace: true })
+    }
+  }, [isDelegateAccess, authenticated, loading, id, delegateToken, navigate])
 
   const [connectionState, setConnectionState] = useState<ConnectionState>('configure')
   const [formData, setFormData] = useState({
@@ -44,6 +61,16 @@ export default function ITSMConfigurationPage() {
   const totalTickets = 2000
 
   const [isSaving, setIsSaving] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+
+  // Show loading state while checking auth for delegate access
+  if (isDelegateAccess && loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">Loading...</div>
+      </div>
+    )
+  }
 
   if (!source) {
     return (
@@ -65,10 +92,16 @@ export default function ITSMConfigurationPage() {
     setIsSaving(false)
     setConnectionState('connected')
 
-    // Show success toast
-    toast.success('Connection successful', {
-      description: `Successfully connected to ${source?.name}`,
-    })
+    // Show different success message for delegate access
+    if (isDelegateAccess) {
+      toast.success('Configuration saved successfully', {
+        description: `The owner has been notified. You can now close this page.`,
+      })
+    } else {
+      toast.success('Connection successful', {
+        description: `Successfully connected to ${source?.name}`,
+      })
+    }
   }
 
   const handleCancel = () => {
@@ -172,18 +205,29 @@ export default function ITSMConfigurationPage() {
         </div>
       </div>
 
-      <div className="flex gap-3 justify-end">
+      <div className="flex gap-3 justify-between">
         <Button
           type="button"
           variant="outline"
-          onClick={handleCancel}
-          disabled={isSaving}
+          onClick={() => setShowShareModal(true)}
+          className="gap-2"
         >
-          Cancel
+          <Share2 className="w-4 h-4" />
+          Delegate to admin
         </Button>
-        <Button type="submit" disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Save Connection'}
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Connection'}
+          </Button>
+        </div>
       </div>
     </form>
   )
@@ -337,6 +381,15 @@ export default function ITSMConfigurationPage() {
           {connectionState === 'configure' ? renderConfigureForm() : renderConnectedView()}
         </div>
       </div>
+
+      {/* Delegate Configuration Modal */}
+      {showShareModal && (
+        <DelegateConfigModal
+          sourceName={source.name}
+          sourceId={id!}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </RitaSettingsLayout>
   )
 }

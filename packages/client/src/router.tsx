@@ -21,6 +21,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import HelpPage from "./pages/HelpPage";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
 import { LoginPage } from "./pages/LoginPage";
+import { SignUpPage } from "./pages/SignUpPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SettingsV1Page from "./pages/SettingsV1Page";
@@ -28,6 +29,8 @@ import ProfilePage from "./pages/settings/ProfilePage";
 import UsersSettingsPage from "./pages/UsersSettingsPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { VerifyEmailSentPage } from "./pages/VerifyEmailSentPage";
+import ITSMConfigurationPage from "./pages/settings/ITSMConfigurationPage";
+import ITSMSourcesPage from "./pages/settings/ITSMSourcesPage";
 
 const router = createBrowserRouter([
 	// Root redirect
@@ -134,6 +137,32 @@ const router = createBrowserRouter([
 			</ProtectedRoute>
 		),
 	},
+	{
+		path: "/settings/itsm",
+		element: (
+			<MockAuthProvider role="owner">
+				<ProtectedRoute>
+					<ITSMSourcesPage />
+				</ProtectedRoute>
+			</MockAuthProvider>
+		),
+	},
+	{
+		path: "/settings/itsm/:id",
+		element: (
+			<MockAuthProvider role="owner">
+				<ProtectedRoute>
+					<ITSMConfigurationPage />
+				</ProtectedRoute>
+			</MockAuthProvider>
+		),
+	},
+	{
+		path: "/config/:id",
+		element: (
+			<ITSMConfigurationPage />
+		),
+	},
 	// Placeholder routes - to be implemented with UX designs
 	{
 		path: "/account",
@@ -199,6 +228,10 @@ const router = createBrowserRouter([
 			{
 				path: "/login",
 				element: <LoginPage />,
+			},
+			{
+				path: "/signup",
+				element: <SignUpPage />,
 			},
 			{
 				path: "/verify-email",

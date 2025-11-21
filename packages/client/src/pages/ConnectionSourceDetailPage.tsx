@@ -1,7 +1,7 @@
 import { Globe } from "lucide-react";
 import { useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
- import ConfluenceConfiguration from "@/components/connection-sources/connection-details/ConfluenceConfiguration";
+import ConfluenceConfiguration from "@/components/connection-sources/connection-details/ConfluenceConfiguration";
 import ServiceNowConfiguration from "@/components/connection-sources/connection-details/ServiceNowConfiguration";
 import SharePointConfiguration from "@/components/connection-sources/connection-details/SharePointConfiguration";
 import WebSearchConfiguration from "@/components/connection-sources/connection-details/WebSearchConfiguration";
@@ -11,7 +11,6 @@ import {
 	SharePointForm,
 	WebSearchForm,
 } from "@/components/connection-sources/connection-forms";
-import Header from "@/components/Header";
 import RitaSettingsLayout from "@/components/layouts/RitaSettingsLayout";
 import {
 	mapDataSourceToUI,
@@ -20,7 +19,30 @@ import {
 } from "@/constants/connectionSources";
 import { ConnectionSourceProvider } from "@/contexts/ConnectionSourceContext";
 import { useDataSource } from "@/hooks/useDataSources";
+import SettingsHeader from "@/pages/settings/SettingsHeader";
 import { BACKEND_STATUS, type DataSourceConnection } from "@/types/dataSource";
+
+// Registry for connection source forms
+const FORM_REGISTRY: Record<
+	string,
+	React.ComponentType<{ onCancel?: () => void; onSuccess?: () => void; onFailure?: () => void }>
+> = {
+	[SOURCES.CONFLUENCE]: ConfluenceForm,
+	[SOURCES.SHAREPOINT]: SharePointForm,
+	[SOURCES.SERVICENOW]: ServiceNowForm,
+	[SOURCES.WEB_SEARCH]: WebSearchForm,
+};
+
+// Registry for connection source configuration views
+const CONFIGURATION_REGISTRY: Record<
+	string,
+	React.ComponentType<{ onEdit: () => void }>
+> = {
+	[SOURCES.CONFLUENCE]: ConfluenceConfiguration,
+	[SOURCES.SHAREPOINT]: SharePointConfiguration,
+	[SOURCES.SERVICENOW]: ServiceNowConfiguration,
+	[SOURCES.WEB_SEARCH]: WebSearchConfiguration,
+};
 
 export default function ConnectionSourceDetailPage() {
 	const { id } = useParams<{ id: string }>(); // UUID from backend
@@ -74,43 +96,40 @@ export default function ConnectionSourceDetailPage() {
 				}
 			: undefined;
 
-		switch (sourceData.type) {
-			case "confluence":
-				return <ConfluenceForm onCancel={handleCancel} />;
-			case "sharepoint":
-				return <SharePointForm onCancel={handleCancel} />;
-			case "servicenow":
-				return <ServiceNowForm onCancel={handleCancel} />;
-			case "websearch":
-				return <WebSearchForm onCancel={handleCancel} />;
-			default:
-				return <div>Unknown source type</div>;
+		const handleSuccess = () => {
+			setIsEditMode(false);
+		};
+
+		const handleFailure = () => {
+			setIsEditMode(false);
+		};
+
+		const FormComponent = FORM_REGISTRY[sourceData.type];
+
+		if (!FormComponent) {
+			return <div>Unknown source type</div>;
 		}
+
+		return <FormComponent onCancel={handleCancel} onSuccess={handleSuccess} onFailure={handleFailure} />;
 	};
 
 	// Render the appropriate configuration view based on source type
 	const renderConfiguration = (sourceData: DataSourceConnection) => {
 		const handleEdit = () => setIsEditMode(true);
 
-		switch (sourceData.type) {
-			case "confluence":
-				return <ConfluenceConfiguration onEdit={handleEdit} />;
-			case "sharepoint":
-				return <SharePointConfiguration onEdit={handleEdit} />;
-			case "servicenow":
-				return <ServiceNowConfiguration onEdit={handleEdit} />;
-			case "websearch":
-				return <WebSearchConfiguration onEdit={handleEdit} />;
-			default:
-				return <div>Unknown source type</div>;
+		const ConfigurationComponent = CONFIGURATION_REGISTRY[sourceData.type];
+
+		if (!ConfigurationComponent) {
+			return <div>Unknown source type</div>;
 		}
+
+		return <ConfigurationComponent onEdit={handleEdit} />;
 	};
 
 	// Render logic:
 	// - Show FORM when: NOT configured OR isEditMode is true
 	// - Show CONFIGURATION VIEW otherwise
 	const renderContent = () => {
-
 		// Show form if not configured OR in edit mode
 		if (!isConfigured || isEditMode) {
 			return renderForm(source, true);
@@ -125,7 +144,7 @@ export default function ConnectionSourceDetailPage() {
 			<RitaSettingsLayout>
 				<div className="flex-1 inline-flex flex-col items-center gap-8 w-full">
 					<div className="self-stretch flex flex-col items-start gap-8">
-						<Header
+						<SettingsHeader
 							breadcrumbs={[
 								{ label: "Connections", href: "/settings/connections" },
 								{ label: sourceTitle },
@@ -141,7 +160,7 @@ export default function ConnectionSourceDetailPage() {
 									<Globe className="h-5 w-5 flex-shrink-0" />
 								)
 							}
-							description={`Connect your ${sourceTitle} instance to build context for Rita to make better experiences.`}
+							description={`Connect your ${sourceTitle} instance to build context for RITA to make better experiences.`}
 						/>
 					</div>
 
