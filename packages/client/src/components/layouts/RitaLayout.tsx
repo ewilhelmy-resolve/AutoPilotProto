@@ -481,9 +481,7 @@ function RitaLayoutContent({ children, activePage = "chat" }: RitaLayoutProps) {
 						)}
 					</div>
 					<div className="ml-auto flex items-center gap-2">
-						{activePage === "chat" &&
-							isOwnerOrAdmin() &&
-							totalKnowledgeBaseFiles > 0 && (
+						{activePage === "chat" && isOwnerOrAdmin() && (
 								<>
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
