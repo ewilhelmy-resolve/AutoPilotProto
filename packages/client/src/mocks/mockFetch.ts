@@ -20,6 +20,7 @@ const mockResponses: Record<string, any> = {
   '/api/conversations': {
     conversations: [],
   },
+  '/api/data-sources': [],
   '/api/files': {
     documents: [],
     total: 0,

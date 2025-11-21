@@ -9,28 +9,26 @@ import { RootLayout } from "./components/layouts/RootLayout";
 import { SSEProvider } from "./contexts/SSEContext";
 import { MockAuthProvider } from "./components/dev/MockAuthProvider";
 import ChatV1Page from "./pages/ChatV1Page";
-import ConnectionSourceRouter from "./pages/ConnectionSourceRouter";
+import ConnectionSourceDetailPage from "./pages/ConnectionSourceDetailPage";
 import ContactPage from "./pages/ContactPage";
 import DevToolsPage from "./pages/DevToolsPage";
 import DropdownTestPage from "./pages/DropdownTestPage";
 import FilesV1Page from "./pages/FilesV1Page";
-import TicketsPage from "./pages/TicketsPage";
-import TicketGroupDetailPage from "./pages/TicketGroupDetailPage";
-import TicketDetailPage from "./pages/TicketDetailPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import HelpPage from "./pages/HelpPage";
 import InviteAcceptPage from "./pages/InviteAcceptPage";
-import { LoginPage } from "./pages/LoginPage";
-import { SignUpPage } from "./pages/SignUpPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SettingsV1Page from "./pages/SettingsV1Page";
+import { SignUpPage } from "./pages/SignUpPage";
 import ProfilePage from "./pages/settings/ProfilePage";
+import ITSMConfigurationPage from "./pages/settings/ITSMConfigurationPage";
+import ITSMSourcesPage from "./pages/settings/ITSMSourcesPage";
+import TermsOfService from "./pages/TermsOfService";
+import TicketsPage from "./pages/TicketsPage";
+import TicketDetailPage from "./pages/TicketDetailPage";
+import TicketGroupDetailPage from "./pages/TicketGroupDetailPage";
 import UsersSettingsPage from "./pages/UsersSettingsPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { VerifyEmailSentPage } from "./pages/VerifyEmailSentPage";
-import ITSMConfigurationPage from "./pages/settings/ITSMConfigurationPage";
-import ITSMSourcesPage from "./pages/settings/ITSMSourcesPage";
 
 const router = createBrowserRouter([
 	// Root redirect
@@ -62,9 +60,9 @@ const router = createBrowserRouter([
 	{
 		path: "/content",
 		element: (
-			<RoleProtectedRoute allowedRoles={['owner', 'admin']}>
+			<MockAuthProvider role="owner">
 				<FilesV1Page />
-			</RoleProtectedRoute>
+			</MockAuthProvider>
 		),
 	},
 	{
@@ -104,18 +102,16 @@ const router = createBrowserRouter([
 	{
 		path: "/settings/profile",
 		element: (
-			<ProtectedRoute>
+			<MockAuthProvider role="owner">
 				<ProfilePage />
-			</ProtectedRoute>
+			</MockAuthProvider>
 		),
 	},
 	{
 		path: "/settings/connections",
 		element: (
 			<MockAuthProvider role="owner">
-				<ProtectedRoute>
-					<SettingsV1Page />
-				</ProtectedRoute>
+				<SettingsV1Page />
 			</MockAuthProvider>
 		),
 	},
@@ -123,27 +119,23 @@ const router = createBrowserRouter([
 		path: "/settings/connections/:id",
 		element: (
 			<MockAuthProvider role="owner">
-				<ProtectedRoute>
-					<ConnectionSourceRouter />
-				</ProtectedRoute>
+				<ConnectionSourceDetailPage />
 			</MockAuthProvider>
 		),
 	},
 	{
 		path: "/settings/users",
 		element: (
-			<ProtectedRoute>
+			<MockAuthProvider role="owner">
 				<UsersSettingsPage />
-			</ProtectedRoute>
+			</MockAuthProvider>
 		),
 	},
 	{
 		path: "/settings/itsm",
 		element: (
 			<MockAuthProvider role="owner">
-				<ProtectedRoute>
-					<ITSMSourcesPage />
-				</ProtectedRoute>
+				<ITSMSourcesPage />
 			</MockAuthProvider>
 		),
 	},
@@ -151,16 +143,8 @@ const router = createBrowserRouter([
 		path: "/settings/itsm/:id",
 		element: (
 			<MockAuthProvider role="owner">
-				<ProtectedRoute>
-					<ITSMConfigurationPage />
-				</ProtectedRoute>
+				<ITSMConfigurationPage />
 			</MockAuthProvider>
-		),
-	},
-	{
-		path: "/config/:id",
-		element: (
-			<ITSMConfigurationPage />
 		),
 	},
 	// Placeholder routes - to be implemented with UX designs
@@ -227,10 +211,6 @@ const router = createBrowserRouter([
 		children: [
 			{
 				path: "/login",
-				element: <LoginPage />,
-			},
-			{
-				path: "/signup",
 				element: <SignUpPage />,
 			},
 			{
@@ -246,12 +226,8 @@ const router = createBrowserRouter([
 				element: <InviteAcceptPage />,
 			},
 			{
-				path: "/forgot-password",
-				element: <ForgotPasswordPage />,
-			},
-			{
-				path: "/reset-password",
-				element: <ResetPasswordPage />,
+				path: "/terms-of-service",
+				element: <TermsOfService />,
 			},
 			{
 				path: "*",
