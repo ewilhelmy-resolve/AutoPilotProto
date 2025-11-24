@@ -6,13 +6,14 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { RefreshCw, Check, Share2, UserCheck } from 'lucide-react'
+import { RefreshCw, Check, Share2, XCircle, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import Header from '@/components/Header'
 import RitaSettingsLayout from '@/components/layouts/RitaSettingsLayout'
 import DelegateConfigModal from '@/components/modals/ShareConfigModal'
@@ -26,7 +27,15 @@ const ITSM_SOURCES: Record<string, { name: string; icon: string }> = {
   'servicenow-1': { name: 'ServiceNow', icon: '/connections/icon_servicenow.svg' },
 }
 
-type ConnectionState = 'configure' | 'connected' | 'importing' | 'imported'
+type ConnectionState = 'configure' | 'connected' | 'importing' | 'imported' | 'error'
+
+interface ImportError {
+  type: 'sync_failed' | 'invalid_credentials' | 'expired_token' | 'partial_import'
+  message: string
+  ticketsImported?: number
+  ticketsFailed?: number
+  retryable: boolean
+}
 
 export default function ITSMConfigurationPage() {
   const { id } = useParams<{ id: string }>()
@@ -62,6 +71,7 @@ export default function ITSMConfigurationPage() {
 
   const [isSaving, setIsSaving] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [importError, setImportError] = useState<ImportError | null>(null)
 
   // Show loading state while checking auth for delegate access
   if (isDelegateAccess && loading) {
@@ -108,10 +118,42 @@ export default function ITSMConfigurationPage() {
     navigate('/settings/connections')
   }
 
+  // Simulate different error scenarios for demo
+  const simulateError = (errorType: ImportError['type']) => {
+    const errors: Record<ImportError['type'], ImportError> = {
+      sync_failed: {
+        type: 'sync_failed',
+        message: 'Failed to sync tickets from ServiceNow',
+        retryable: true,
+      },
+      invalid_credentials: {
+        type: 'invalid_credentials',
+        message: 'Invalid credentials. Please check your API key and email.',
+        retryable: false,
+      },
+      expired_token: {
+        type: 'expired_token',
+        message: 'Access token has expired. Please reconnect your account.',
+        retryable: false,
+      },
+      partial_import: {
+        type: 'partial_import',
+        message: 'Some tickets failed to import',
+        ticketsImported: 1847,
+        ticketsFailed: 153,
+        retryable: true,
+      },
+    }
+
+    setImportError(errors[errorType])
+    setConnectionState('error')
+  }
+
   const handleImportTickets = async () => {
     setConnectionState('importing')
     setImportProgress(0)
     setImportedCount(0)
+    setImportError(null)
 
     // Simulate progressive import
     const importInterval = setInterval(() => {
@@ -140,7 +182,23 @@ export default function ITSMConfigurationPage() {
 
   const handleRefreshSync = async () => {
     // Re-run import
+    setImportError(null)
     await handleImportTickets()
+  }
+
+  const handleRetryImport = async () => {
+    setImportError(null)
+    await handleImportTickets()
+  }
+
+  const handleReconfigure = () => {
+    setConnectionState('configure')
+    setImportError(null)
+    setFormData({
+      instanceUrl: '',
+      apiKey: '',
+      email: '',
+    })
   }
 
   const handleViewTickets = () => {
@@ -320,6 +378,36 @@ export default function ITSMConfigurationPage() {
               </p>
             )}
 
+            {/* Error states */}
+            {connectionState === 'error' && importError && (
+              <Alert variant={importError.type === 'partial_import' ? 'default' : 'destructive'}>
+                {importError.type === 'partial_import' ? (
+                  <AlertTriangle className="h-4 w-4" />
+                ) : (
+                  <XCircle className="h-4 w-4" />
+                )}
+                <AlertTitle>
+                  {importError.type === 'sync_failed' && 'Failed sync'}
+                  {importError.type === 'invalid_credentials' && 'Invalid credentials'}
+                  {importError.type === 'expired_token' && 'Expired access token'}
+                  {importError.type === 'partial_import' && 'Partial import'}
+                </AlertTitle>
+                <AlertDescription>
+                  {importError.message}
+                  {importError.type === 'partial_import' && importError.ticketsImported && importError.ticketsFailed && (
+                    <div className="mt-2 text-sm">
+                      <p className="font-medium">
+                        {importError.ticketsImported} tickets imported successfully
+                      </p>
+                      <p className="text-muted-foreground">
+                        {importError.ticketsFailed} tickets failed to import
+                      </p>
+                    </div>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Action buttons */}
             <div className="flex gap-3 justify-end">
               {connectionState === 'connected' && (
@@ -346,7 +434,66 @@ export default function ITSMConfigurationPage() {
                   </Button>
                 </>
               )}
+
+              {connectionState === 'error' && importError && (
+                <>
+                  {importError.retryable ? (
+                    <>
+                      <Button variant="outline" onClick={handleRetryImport}>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry Import
+                      </Button>
+                      {importError.type === 'partial_import' && (
+                        <Button onClick={handleViewTickets}>
+                          View Imported Tickets
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <Button onClick={handleReconfigure}>
+                      Reconfigure Connection
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
+
+            {/* Demo error buttons (only show when connected, for testing) */}
+            {connectionState === 'connected' && (
+              <div className="mt-4 p-4 border border-dashed rounded-lg bg-muted/50">
+                <p className="text-xs font-medium text-muted-foreground mb-3">Demo Error States:</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => simulateError('sync_failed')}
+                  >
+                    Failed Sync
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => simulateError('invalid_credentials')}
+                  >
+                    Invalid Credentials
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => simulateError('expired_token')}
+                  >
+                    Expired Token
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => simulateError('partial_import')}
+                  >
+                    Partial Import
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
