@@ -138,7 +138,7 @@ export default function ITSMConfigurationPage() {
       },
       partial_import: {
         type: 'partial_import',
-        message: 'Some tickets failed to import',
+        message: 'Some tickets could not be imported due to validation errors',
         ticketsImported: 1847,
         ticketsFailed: 153,
         retryable: true,
@@ -393,14 +393,19 @@ export default function ITSMConfigurationPage() {
                   {importError.type === 'partial_import' && 'Partial import'}
                 </AlertTitle>
                 <AlertDescription>
-                  {importError.message}
+                  <p>{importError.message}</p>
                   {importError.type === 'partial_import' && importError.ticketsImported && importError.ticketsFailed && (
-                    <div className="mt-2 text-sm">
-                      <p className="font-medium">
-                        {importError.ticketsImported} tickets imported successfully
-                      </p>
-                      <p className="text-muted-foreground">
-                        {importError.ticketsFailed} tickets failed to import
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                        <span className="text-sm">Successfully imported</span>
+                        <span className="font-semibold text-green-600">{importError.ticketsImported}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                        <span className="text-sm">Failed to import</span>
+                        <span className="font-semibold text-destructive">{importError.ticketsFailed}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Click "View Failed" to see error details for each ticket
                       </p>
                     </div>
                   )}
@@ -437,18 +442,28 @@ export default function ITSMConfigurationPage() {
 
               {connectionState === 'error' && importError && (
                 <>
-                  {importError.retryable ? (
+                  {importError.type === 'partial_import' ? (
                     <>
+                      <Button variant="outline" onClick={() => {
+                        toast.info('Failed tickets', {
+                          description: `Showing ${importError.ticketsFailed} failed tickets with error details`
+                        })
+                      }}>
+                        View Failed ({importError.ticketsFailed})
+                      </Button>
                       <Button variant="outline" onClick={handleRetryImport}>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        Retry Import
+                        Retry Failed Only
                       </Button>
-                      {importError.type === 'partial_import' && (
-                        <Button onClick={handleViewTickets}>
-                          View Imported Tickets
-                        </Button>
-                      )}
+                      <Button onClick={handleViewTickets}>
+                        View Imported Tickets
+                      </Button>
                     </>
+                  ) : importError.retryable ? (
+                    <Button variant="outline" onClick={handleRetryImport}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Retry Import
+                    </Button>
                   ) : (
                     <Button onClick={handleReconfigure}>
                       Reconfigure Connection
